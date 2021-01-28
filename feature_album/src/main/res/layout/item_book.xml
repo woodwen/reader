@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="#fff">
+
+    <ImageView
+        android:id="@+id/iv_item_cover"
+        android:layout_width="90dp"
+        android:layout_height="120dp"
+        android:layout_margin="16dp"
+        android:scaleType="fitXY"
+        android:src="@drawable/pic_placeholder"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/tv_item_name"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="16dp"
+        android:textColor="#000"
+        android:textSize="18dp"
+        app:layout_constraintLeft_toRightOf="@+id/iv_item_cover"
+        app:layout_constraintTop_toTopOf="@+id/iv_item_cover"
+        tools:text="傲视电渗" />
+
+    <TextView
+        android:id="@+id/tv_item_author"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="16dp"
+        android:layout_marginTop="10dp"
+        android:textColor="#7e7e7e"
+        android:textSize="16dp"
+        app:layout_constraintLeft_toRightOf="@+id/iv_item_cover"
+        app:layout_constraintTop_toBottomOf="@+id/tv_item_name"
+        tools:text="作者: 寂小贼" />
+
+    <TextView
+        android:id="@+id/tv_item_desc"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="16dp"
+        android:layout_marginTop="10dp"
+        android:textColor="#7e7e7e"
+        android:textSize="14dp"
+        app:layout_constrainedWidth="true"
+        app:layout_constraintLeft_toRightOf="@+id/iv_item_cover"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/tv_item_author"
+        tools:text="废柴少年得无上传承,获逆天神脉,学绝世神功,掌握超绝丹术,这使他..." />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

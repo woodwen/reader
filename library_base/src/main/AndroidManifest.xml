@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.woodnoisu.reader.library.base" >
+    <application>
+        <provider
+            android:name="com.woodnoisu.reader.library.base.utils.ContextProvider"
+            android:authorities="${applicationId}.contextprovider"
+            android:exported="false" />
+    </application>
+</manifest>

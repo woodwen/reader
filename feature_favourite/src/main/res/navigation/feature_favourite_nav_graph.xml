@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    app:startDestination="@id/favouriteFragment">
+    <fragment
+        android:id="@+id/favouriteFragment"
+        android:name="com.woodnoisu.reader.feature.favourite.presentation.favourite.FavouriteFragment"
+        android:label="FavouriteFragment"
+        app:moduleName="feature_favourite">
+    <action
+        android:id="@+id/actionFavoriteToReader"
+        app:destination="@id/readerFragment"/>
+    </fragment>
+
+    <fragment
+        android:id="@+id/readerFragment"
+        android:name="com.woodnoisu.reader.feature.reader.presentation.reader.ReaderFragment"
+        android:label="ReaderFragment"
+        app:moduleName="feature_reader">
+        <argument
+            android:name="bookId"
+            app:argType="string" />
+    </fragment>
+
+</navigation>
