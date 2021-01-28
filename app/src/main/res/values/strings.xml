@@ -1,0 +1,14 @@
+<resources>
+    <string name="app_name">Reader</string>
+
+    <!--Dynamic module titles-->
+    <string name="feature_album">feature album</string>
+    <string name="feature_favourite">feature favourite</string>
+    <string name="feature_profile">feature profile</string>
+    <string name="feature_reader">feature reader</string>
+
+    <!--Bottom menu-->
+    <string name="albums">书城</string>
+    <string name="favorites">书架</string>
+    <string name="profile">我</string>
+</resources>
