@@ -52,6 +52,68 @@
 3.书城不再是写死的方式，而是类似于厚墨的安装方式
 4.支持语音朗读
 
-**注: 该项目不定时维护更新，练手项目，如有侵权，立马删除**
+**注: 该项目不定时维护更新，练手项目，如有侵权的地方，请告知小弟，立马删除**
 
-# 采用了以下开源框架
+# 项目特点
+
+	• kotlin
+	• 架构（动态功能模块，清洁架构，Model-View-ViewModel，Model-View-Intent）
+	• Android Jetpack 库
+	• 单活动架构（导航组件）
+	• Reactive UI
+	• CI pipeline（GitHub Actions）
+	• Testing（Unit，UI）
+	• 静态分析工具
+	• 依赖注入
+	• Material Design
+
+# 技术栈
+
+最低API级别设置为21，因此该方法适用于超过 85％的运行Android的设备。该项目利用了Android生态系统中许多流行的库和工具。除非有充分的理由使用非稳定依赖关系，否则大多数库都处于稳定版本。
+	• 技术栈
+		○ Kotlin + Coroutines-执行后台操作
+		○ Kodein-依赖注入
+		○ OKHttp - 网络请求相关
+		○ Retrofit - 网络接口相关
+		○ Jetpack
+			§ Navigation - 处理整个应用内导航
+			§ LiveData - 通知有关数据库更改的视图
+			§ Lifecycle - 生命周期状态更改时执行操作
+			§ ViewModel-以生命周期意识的方式存储和管理与UI相关的数据
+		○ Coil-使用Kotlin惯用API的图像加载库
+		○ Lottie-动画库
+		○ Stetho-应用程序调试工具
+	• 架构
+		○ 清洁架构（模块级别）
+		○ MVVM + MVI（表示层）
+		○ 动态功能模块
+		○ Android体系结构组件（ViewModel，LiveData，Navigation，SafeArgs插件）
+	• 测试
+		○ Unit Tests（JUnit）
+		○ Mockk
+		○ Kluent
+	• Gradle
+		○ Gradle Kotlin DSL
+		○ 自定义任务
+		○ 插件（Ktlint，Detekt，Versions，SafeArgs）
+
+# 架构
+
+	与功能相关的代码位于功能模块之一中。我们可以将每个功能视为微服务或私有库的等效项。
+	模块化的基于代码的方法提供了一些好处：
+		• 更好地分离关注点。每个模块都有一个清晰的API。与功能相关的类存在于不同的模块中，没有显式的模块依赖性就无法引用。
+		• 功能可以并行开发，例如。由不同的团队
+		• 每个功能都可以独立于其他功能独立开发
+		• 更快的编译时间
+
+	我们在应用程序中有三种模块：
+		• app module
+		这是主要模块。它包含将多个模块（依赖注入设置NavHostActivity等）和基本应用程序配置（改造配置，必需的权限设置，自定义应用程序类等）连接在一起的代码。
+		
+		• helper modules
+			○ 独立于应用程序的library_base模块，包含可在其他项目/应用程序中重用的通用代码库（此代码并非特定于此应用程序）。基类，实用程序，自定义委托，扩展。
+			○ library_x一些功能可能依赖的其他特定于应用程序的模块。如果您只想在几个功能模块之间共享某些资产或代码，这将很有帮助（当前应用程序没有此类模块）
+			
+		• feature modules 
+		最常见的模块类型，包含与给定功能相关的所有代码。
+
