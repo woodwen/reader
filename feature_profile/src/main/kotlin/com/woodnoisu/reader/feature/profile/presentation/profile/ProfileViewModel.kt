@@ -23,7 +23,7 @@ internal class ProfileViewModel(
         return "$cacheSize$unit"
     }
 
-    fun getHome() :String = "https://www.baidu.com"
+    fun getHome() :String = "https://github.com/woodwen/reader"
 
     fun clearCaches() {
         FileUtil.deleteFile(Constant.BOOK_CACHE_PATH)
