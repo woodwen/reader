@@ -29,8 +29,7 @@ class FavouriteFragment : InjectionFragment(R.layout.fragment_favourites) {
     private val stateObserver = Observer<ViewState> {
         refresh_layout.isRefreshing = it.isLoading
         showToast(it.errorMsg)
-        val bookDomainModels = it.favouriteDomainModel.favouriteBookDomainModels
-        favouriteAdapter.refreshItems(bookDomainModels)
+        favouriteAdapter.refreshItems(it.favouriteDomainModel?.favouriteBookDomainModels)
     }
 
     /**

@@ -94,25 +94,29 @@ internal class FavouriteViewModel (
         is Action.BookListLoadingFailure -> state.copy(
             isLoading = false,
             errorMsg = "错误：加载书籍列表失败",
-            favouriteDomainModel = FavouriteDomainModel()
+            favouriteDomainModel = FavouriteDomainModel(favouriteBookDomainModels = listOf())
         )
 
         is Action.InsertedBookSuccess -> state.copy(
             isLoading = false,
-            errorMsg = ""
+            errorMsg = "",
+            favouriteDomainModel = FavouriteDomainModel()
         )
         is Action.InsertedBookFailure -> state.copy(
             isLoading = false,
-            errorMsg = "错误：书架加入书籍失败"
+            errorMsg = "错误：书架加入书籍失败",
+            favouriteDomainModel = FavouriteDomainModel()
         )
 
         is Action.DeletedBookSuccess -> state.copy(
             isLoading = false,
-            errorMsg = ""
+            errorMsg = "",
+            favouriteDomainModel = FavouriteDomainModel()
         )
         is Action.DeletedBookFailure -> state.copy(
             isLoading = false,
-            errorMsg = "错误：书架删除书籍失败"
+            errorMsg = "错误：书架删除书籍失败",
+            favouriteDomainModel = FavouriteDomainModel()
         )
     }
 }
@@ -120,7 +124,7 @@ internal class FavouriteViewModel (
 internal data class ViewState(
         val isLoading: Boolean = true,
         val errorMsg: String = "",
-        val favouriteDomainModel: FavouriteDomainModel = FavouriteDomainModel()
+        val favouriteDomainModel: FavouriteDomainModel? = null
 ) : BaseViewState
 
 internal sealed class Action : BaseAction {
