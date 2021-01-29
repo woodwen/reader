@@ -94,9 +94,9 @@ class AlbumFragment : InjectionFragment(R.layout.fragment_album_square) {
                     activity = requireActivity(),
                     title = "书城分类",
                     list = viewModel.getParses(),
-                    onListItemClick = {
+                    onListItemClick = { _,text->
                         progressBar.visible = true
-                        viewModel.setShopName(it)
+                        viewModel.setShopName(text)
                         val typeName = viewModel.getTypes()[0]
                         viewModel.getBookListByType(typeName, 1)
                         refreshTitle()
@@ -110,9 +110,9 @@ class AlbumFragment : InjectionFragment(R.layout.fragment_album_square) {
                     activity = requireActivity(),
                     title = "小说分类",
                     list = viewModel.getTypes(),
-                    onListItemClick = {
+                    onListItemClick = {_,text->
                         progressBar.visible = true
-                        viewModel.getBookListByType(it, 1)
+                        viewModel.getBookListByType(text, 1)
                         refreshTitle()
                     }
             )

@@ -111,7 +111,7 @@ internal class ReaderViewModel(
      * 获取阅读记录
      */
     fun fetchBookRecord() {
-        bookRecordFetching.value =RequestGetBookRecordDomainModel(getBook().url)
+        bookRecordFetching.value = RequestGetBookRecordDomainModel(getBook().url)
     }
 
     /**

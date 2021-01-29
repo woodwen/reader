@@ -18,7 +18,7 @@ object DialogUtil {
         hint: String = "",
         onPositiveClick: () -> Unit = {},
         onNegativeClick: () -> Unit = {},
-        onListItemClick: (String) -> Unit = {},
+        onListItemClick: (Int,String) -> Unit = {index,text->},
         onInput: (String) -> Unit = {}
     ) {
         MaterialDialog(activity).show {
@@ -39,8 +39,8 @@ object DialogUtil {
                 }
             }
             if (list.isNotEmpty()) {
-                listItems(items = list) { _, _, text ->
-                    onListItemClick(text.toString())
+                listItems(items = list) { _, index, text ->
+                    onListItemClick(index,text.toString())
                 }
             }
             if (hint.isNotBlank()) {
