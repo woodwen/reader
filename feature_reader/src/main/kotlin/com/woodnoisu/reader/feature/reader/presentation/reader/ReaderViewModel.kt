@@ -1,249 +1,178 @@
 package com.woodnoisu.reader.feature.reader.presentation.reader
 
-import androidx.annotation.MainThread
 import androidx.lifecycle.*
 import com.woodnoisu.reader.feature.reader.domain.model.*
-import com.woodnoisu.reader.feature.reader.domain.model.ReaderBookDomainModel
-import com.woodnoisu.reader.feature.reader.domain.model.ReaderBookSignDomainModel
-import com.woodnoisu.reader.feature.reader.domain.model.ReaderChapterDomainModel
-import com.woodnoisu.reader.feature.reader.domain.model.ReaderDomainModel
-import com.woodnoisu.reader.feature.reader.domain.model.ReaderRecordDomainModel
-import com.woodnoisu.reader.feature.reader.domain.usecase.*
-import com.woodnoisu.reader.feature.reader.domain.usecase.AddSignUseCase
-import com.woodnoisu.reader.feature.reader.domain.usecase.DeleteSignUseCase
-import com.woodnoisu.reader.feature.reader.domain.usecase.GetBookRecordUseCase
-import com.woodnoisu.reader.feature.reader.domain.usecase.GetBookUseCase
-import com.woodnoisu.reader.feature.reader.domain.usecase.GetChapterContentsUseCase
-import com.woodnoisu.reader.feature.reader.presentation.page.ReadSettingManager
-import com.woodnoisu.reader.library.base.model.*
+import com.woodnoisu.reader.feature.reader.domain.repository.ReaderRepository
 import com.woodnoisu.reader.library.base.presentation.navigation.NavManager
 import com.woodnoisu.reader.library.base.presentation.viewmodel.BaseAction
 import com.woodnoisu.reader.library.base.presentation.viewmodel.BaseViewModel
 import com.woodnoisu.reader.library.base.presentation.viewmodel.BaseViewState
 import com.woodnoisu.reader.library.base.utils.Constant
 import com.woodnoisu.reader.library.base.utils.SpUtil
-import com.woodnoisu.reader.library.base.utils.*
-import kotlinx.coroutines.launch
 
 internal class ReaderViewModel(
-        private val navManager: NavManager,
-        private val addSignUseCase: AddSignUseCase,
-        private val deleteSignUseCase: DeleteSignUseCase,
-        private val getBookRecordUseCase: GetBookRecordUseCase,
-        private val getBookUseCase: GetBookUseCase,
-        private val getChapterContentsUseCase: GetChapterContentsUseCase,
-        private val getChaptersUseCase: GetChaptersUseCase,
-        private val getSignsUseCase: GetSignsUseCase,
-        private val saveBookRecordUseCase: SaveBookRecordUseCase,
-        private val args: ReaderFragmentArgs
+    private val navManager: NavManager,
+    private val readerRepository: ReaderRepository,
+    private val args: ReaderFragmentArgs
 ): BaseViewModel<ViewState, Action>(ViewState()) {
-
-    // 当前章节
-    private var _cChapter:ReaderChapterDomainModel?=null
-
-    // 当前章节索引
-    private var _cChapterIndex: Int = 0
-
-    // 开始的章节
-    private var _chapterStart: Int = 0
-
-    // 当前模式
-    private var _nowMode: Boolean = SpUtil.getBooleanValue(Constant.NIGHT)
-
     // 当前书籍
-    private lateinit var _collBook: ReaderBookDomainModel
+    private var cBook:ReaderBookDomainModel? = null
+    // 当前章节
+    private var cChapter:ReaderChapterDomainModel? = null
+    // 当前章节页面索引
+    private var cChapterIndex:Int = 0
+    // 开始的章节索引
+    private var chapterStart : Int = 0
+    // 当前模式
+    private var nowMode: Boolean = SpUtil.getBooleanValue(Constant.NIGHT)
 
-    fun setCollBook(book: ReaderBookDomainModel) {
-        _collBook = book
-    }
+    // 获取书籍
+    private val bookFetching: MutableLiveData<RequestGetBookDomainModel> = MutableLiveData()
+    val bookLiveData: LiveData<ResponseGetBookDomainModel>
 
-    fun moveBackChapterStart(amount: Int) {
-        val start = getChapterStart()
-        _chapterStart = start + amount
-    }
+    // 获取章节内容列表
+    private val chapterContentsFetching: MutableLiveData<RequestGetChapterContentsDomainModel> = MutableLiveData()
+    val chapterContentsLiveData: LiveData<ResponseGetChapterContentsDomainModel>
+    private val refreshChapterFetching: MutableLiveData<Int> = MutableLiveData()
+    val refreshChapterLiveData: LiveData<Int> get() = refreshChapterFetching
+    private val chapterContentErrFetching: MutableLiveData<String> = MutableLiveData()
+    val chapterContentErrLiveData: LiveData<String> get() = chapterContentErrFetching
 
-    fun compareNowMode(): Boolean {
-        val d = SpUtil.getBooleanValue(Constant.NIGHT) != _nowMode
-        _nowMode = SpUtil.getBooleanValue(Constant.NIGHT)
-        return d
-    }
+    // 获取章节列表
+    private val chaptersFetching: MutableLiveData<RequestGetChaptersDomainModel> = MutableLiveData()
+    val chaptersLiveData: LiveData<ResponseGetChaptersDomainModel>
 
-    fun setCurrentChapter(index: Int, bean: ReaderChapterDomainModel) {
-        _cChapterIndex = index
-        _cChapter = bean
-    }
+    // 获取阅读记录
+    private val bookRecordFetching: MutableLiveData<RequestGetBookRecordDomainModel> = MutableLiveData()
+    val bookRecordLiveData: LiveData<ResponseGetBookRecordDomainModel>
 
-    fun negateIsNightMode():Boolean {
-        val isNightMode = getIsNightMode()
-        ReadSettingManager.getInstance().isNightMode = !isNightMode
-        return getIsNightMode()
-    }
+    // 获取书签列表
+    private val signsFetching: MutableLiveData<RequestGetSignsDomainModel> = MutableLiveData()
+    val signsLiveData: LiveData<ResponseGetSignsDomainModel>
 
-    fun getCollBook() = _collBook
+    // 保存阅读记录
+    private val saveBookRecordFetching: MutableLiveData<RequestSetBookRecordDomainModel> = MutableLiveData()
+    val saveBookRecordLiveData: LiveData<ResponseSetBookRecordDomainModel>
 
-    fun getChapterStart() = _chapterStart
+    // 添加书签
+    private val addSignFetching: MutableLiveData<RequestAddSignDomainModel> = MutableLiveData()
+    val addSignLiveData: LiveData<ResponseAddSignDomainModel>
 
-    fun getIsNightMode() = ReadSettingManager.getInstance().isNightMode
+    // 删除书签列表
+    private val deleteSignsFetching: MutableLiveData<RequestDeleteSignsDomainModel> = MutableLiveData()
+    val deleteSignsLiveData: LiveData<ResponseDeleteSignsDomainModel>
 
-    fun getIsFullScreen() = ReadSettingManager.getInstance().isFullScreen
-
-    /**
-     * 获取书籍列表
-     */
-    private fun getBook(bookId: String) {
-        viewModelScope.launch {
-            getBookUseCase.execute(bookId).also { result ->
-                val action = when (result) {
-                    is GetBookUseCase.Result.Success ->
-                        Action.ReaderBookLoadSuccess(result.data)
-
-                    is GetBookUseCase.Result.Error ->
-                        Action.ReaderBookLoadFailure
-                }
-                sendAction(action)
-            }
-        }
-    }
+    /////////////////////////////////////////////////////////////////////////////////////////
 
     /**
-     * 获取章节内容（多）
+     * 获取数据
      */
-    fun getChapterContents(chapters: List<ReaderChapterDomainModel>){
-        viewModelScope.launch {
-            getChapterContentsUseCase.execute(chapters).also { result ->
-                val action = when (result) {
-                    is GetChapterContentsUseCase.Result.Success ->
-                        Action.ReaderChapterContentsLoadSuccess(result.data)
+    private fun fetchBook(bookId:String) {
+        bookFetching.value = RequestGetBookDomainModel(bookId)
+    }
 
-                    is GetChapterContentsUseCase.Result.Error ->
-                        Action.ReaderChapterContentsLoadFailure
-                }
-                sendAction(action)
-            }
-        }
+    /**
+     * 设置书籍
+     */
+    fun setBook(book: ReaderBookDomainModel) {
+        cBook = book
+    }
+
+    /**
+     * 获取书籍
+     */
+    fun getBook() = cBook!!
+
+    /**
+     * 获取章节内容列表
+     */
+    fun fetchChapterContents(chapters: List<ReaderChapterDomainModel>) {
+        chapterContentsFetching.value = RequestGetChapterContentsDomainModel(chapters)
     }
 
     /**
      * 获取章节列表
      */
-    fun getChapters(readerBookDomainModel: ReaderBookDomainModel,
-                    start: Int,
-                    limit:Int=100,
-                    cacheContents:Boolean=false){
+    fun fetchChapters(start: Int = 0, limit: Int = 100, cacheContents: Boolean = false) {
         var index = start
         if (cacheContents && start < -1) {
             //如果缓存，且开始设置为-1的话 就用当前章节索引
-            index = _cChapterIndex
+            index = cChapterIndex
         }
-        viewModelScope.launch {
-            getChaptersUseCase.execute(readerBookDomainModel,
-                                        index,
-                                       limit,
-                                       cacheContents).also { result ->
-                val action = when (result) {
-                    is GetChaptersUseCase.Result.Success ->
-                        Action.ReaderChaptersLoadSuccess(result.data)
-
-                    is GetChaptersUseCase.Result.Error ->
-                        Action.ReaderChaptersLoadFailure
-                }
-                sendAction(action)
-            }
-        }
+        chaptersFetching.value =
+            RequestGetChaptersDomainModel(
+                getBook(),
+                index,
+                limit,
+                cacheContents)
     }
+
     /**
      * 获取阅读记录
      */
-    fun getBookRecord(){
-        val bookUrl = getCollBook().url
-        viewModelScope.launch {
-            getBookRecordUseCase.execute(bookUrl).also { result ->
-                val action = when (result) {
-                    is GetBookRecordUseCase.Result.Success ->
-                        Action.ReaderBookRecordLoadSuccess(result.data)
-
-                    is GetBookRecordUseCase.Result.Error ->
-                        Action.ReaderBookRecordLoadFailure
-                }
-                sendAction(action)
-            }
-        }
+    fun fetchBookRecord() {
+        bookRecordFetching.value =RequestGetBookRecordDomainModel(getBook().url)
     }
 
     /**
      * 获取书签列表
      */
-    fun getSigns(){
-        val bookUrl = getCollBook().url
-        viewModelScope.launch {
-            getSignsUseCase.execute(bookUrl).also { result ->
-                val action = when (result) {
-                    is GetSignsUseCase.Result.Success ->
-                        Action.ReaderSignsLoadSuccess(result.data)
-
-                    is GetSignsUseCase.Result.Error ->
-                        Action.ReaderSignsLoadFailure
-                }
-                sendAction(action)
-            }
-        }
+    fun fetchBookSigns() {
+        signsFetching.value =RequestGetSignsDomainModel(getBook().url)
     }
 
     /**
      * 保存阅读记录
      */
-    fun saveBookRecord(readerRecordDomainModel: ReaderRecordDomainModel){
-        viewModelScope.launch {
-            saveBookRecordUseCase.execute(readerRecordDomainModel).also { result ->
-                val action = when (result) {
-                    is SaveBookRecordUseCase.Result.Success ->
-                        Action.ReaderLoadSuccess
-
-                    is SaveBookRecordUseCase.Result.Error ->
-                        Action.ReaderLoadFailure
-                }
-                sendAction(action)
-            }
+    fun fetchSaveBookRecord(bean: ReaderRecordDomainModel?) {
+        if (bean != null) {
+            saveBookRecordFetching.value =  RequestSetBookRecordDomainModel(bean)
         }
     }
 
     /**
      * 添加书签
      */
-    fun addSign(){
-        val chapterUrl = _cChapter?.url ?: ""
-        val chapterName = _cChapter?.name ?: ""
-        val bookUrl = getCollBook().url
-        viewModelScope.launch {
-            addSignUseCase.execute(bookUrl,chapterUrl,chapterName).also { result ->
-                val action = when (result) {
-                    is AddSignUseCase.Result.Success ->
-                        Action.ReaderLoadSuccess
-
-                    is AddSignUseCase.Result.Error ->
-                        Action.ReaderLoadFailure
-                }
-                sendAction(action)
-            }
-        }
+    fun fetchAddSign() {
+        val chapterUrl = cChapter?.url ?: ""
+        val chapterName = cChapter?.name ?: ""
+        val mBookUrl = getBook().url
+        addSignFetching.value = RequestAddSignDomainModel(mBookUrl, chapterUrl, chapterName)
     }
 
     /**
-     * 删除书签
+     * 删除书签列表
      */
-    fun deleteSigns(readerBookSignDomainModels: List<ReaderBookSignDomainModel>){
-        viewModelScope.launch {
-            deleteSignUseCase.execute(readerBookSignDomainModels).also { result ->
-                val action = when (result) {
-                    is DeleteSignUseCase.Result.Success ->
-                        Action.ReaderLoadSuccess
+    fun fetchDeleteSigns(bookSignBeans: List<ReaderBookSignDomainModel>) {
+        deleteSignsFetching.value = RequestDeleteSignsDomainModel(bookSignBeans)
+    }
 
-                    is DeleteSignUseCase.Result.Error ->
-                        Action.ReaderLoadFailure
-                }
-                sendAction(action)
-            }
-        }
+    /**
+     * 移动当前章节位置
+     */
+    fun moveBackChapterStart(amount: Int) {
+        chapterStart += amount
+    }
+
+    /**
+     * 获取当前章节位置
+     */
+    fun getChapterStart() = chapterStart
+
+    /**
+     * 比较当前模式
+     */
+    fun compareNowMode():Boolean {
+        val mNowMode = nowMode
+        return SpUtil.getBooleanValue(Constant.NIGHT) != mNowMode
+    }
+
+    /**
+     * 设置当前章节
+     */
+    fun setCurrentChapter(index:Int,chapter: ReaderChapterDomainModel) {
+        cChapterIndex = index
+        cChapter = chapter
     }
 
     /**
@@ -260,96 +189,159 @@ internal class ReaderViewModel(
         navManager.popBack()
     }
 
+    /**
+     * 初始化
+     */
+    init {
+        // 填充书籍
+        bookLiveData = bookFetching.switchMap {
+            _isLoading.postValue(true)
+            launchOnViewModelScope {
+                readerRepository.getBook(
+                    request = it,
+                    onSuccess = {
+                        _isLoading.postValue(false)
+                    },
+                    onError = {
+                        _isLoading.postValue(false)
+                        _toast.postValue(it)
+                    }
+                ).asLiveData()
+            }
+        }
+
+        // 填充章节内容
+        chapterContentsLiveData = chapterContentsFetching.switchMap {
+            _isLoading.postValue(true)
+            launchOnViewModelScope {
+                readerRepository.getChapterContents(
+                    request = it,
+                    onNext = {refreshChapterFetching.postValue(it)},
+                    onSuccess = {
+                        _isLoading.postValue(false)
+                    },
+                    onError = {
+                        _isLoading.postValue(false)
+                        _toast.postValue(it)
+                        chapterContentErrFetching.postValue(it)
+                    }
+                ).asLiveData()
+            }
+        }
+
+        // 填充章节列表
+        chaptersLiveData = chaptersFetching.switchMap {
+            _isLoading.postValue(true)
+            launchOnViewModelScope {
+                readerRepository.getChapters(
+                    request = it,
+                    onSuccess = {
+                        _isLoading.postValue(false)
+                    },
+                    onError = {
+                        _isLoading.postValue(false)
+                        _toast.postValue(it)
+                    }
+                ).asLiveData()
+            }
+        }
+
+        // 获取阅读记录
+        bookRecordLiveData = bookRecordFetching.switchMap {
+            _isLoading.postValue(true)
+            launchOnViewModelScope {
+                readerRepository.getBookRecord(
+                    request = it,
+                    onSuccess = {
+                        _isLoading.postValue(false)
+                    },
+                    onError = {
+                        _isLoading.postValue(false)
+                        _toast.postValue(it)
+                    }
+                ).asLiveData()
+            }
+        }
+
+        // 获取书签
+        signsLiveData = signsFetching.switchMap {
+            _isLoading.postValue(true)
+            launchOnViewModelScope {
+                readerRepository.getSigns(
+                    request = it,
+                    onSuccess = {
+                        _isLoading.postValue(false)
+                    },
+                    onError = {
+                        _isLoading.postValue(false)
+                        _toast.postValue(it)
+                    }
+                ).asLiveData()
+            }
+        }
+
+        // 保存阅读记录
+        saveBookRecordLiveData = saveBookRecordFetching.switchMap {
+            _isLoading.postValue(true)
+            launchOnViewModelScope{
+                readerRepository.setBookRecord(
+                    request = it,
+                    onSuccess = {
+                        _isLoading.postValue(false)
+                    },
+                    onError = {
+                        _isLoading.postValue(false)
+                        _toast.postValue(it)
+                    }
+                ).asLiveData()
+            }
+        }
+
+        // 添加书签
+        addSignLiveData = addSignFetching.switchMap {
+            _isLoading.postValue(true)
+            launchOnViewModelScope {
+                readerRepository.addSign(
+                    request = it,
+                    onSuccess = {
+                        _isLoading.postValue(false)
+                    },
+                    onError = {
+                        _isLoading.postValue(false)
+                        _toast.postValue(it)
+                    }
+                ).asLiveData()
+            }
+        }
+
+        // 删除书签
+        deleteSignsLiveData = deleteSignsFetching.switchMap {
+            _isLoading.postValue(true)
+            launchOnViewModelScope {
+                readerRepository.deleteSigns(
+                    request = it,
+                    onSuccess = {
+                        _isLoading.postValue(false)
+                    },
+                    onError = {
+                        _isLoading.postValue(false)
+                        _toast.postValue(it)
+                    }
+                ).asLiveData()
+            }
+        }
+    }
+
+    /**
+     * 起始加载
+     */
     override fun onLoadData() {
-        getBook(args.bookId)
+        fetchBook(args.bookId)
     }
 
-    override fun onReduceState(viewAction: Action) = when (viewAction) {
-        is Action.ReaderBookRecordLoadSuccess -> state.copy(
-                isLoading = false,
-                errorMsg = "",
-                readerDomainModel = viewAction.readerDomainModel
-        )
-        is Action.ReaderBookRecordLoadFailure -> state.copy(
-                isLoading = false,
-                errorMsg = "错误：加载阅读记录失败",
-                readerDomainModel = ReaderDomainModel(readerRecordDomainModel=ReaderRecordDomainModel())
-        )
-        is Action.ReaderBookLoadSuccess -> state.copy(
-                isLoading = false,
-                errorMsg = "",
-                readerDomainModel = viewAction.readerDomainModel
-        )
-        is Action.ReaderBookLoadFailure -> state.copy(
-                isLoading = false,
-                errorMsg = "错误：加载书籍失败",
-                readerDomainModel = ReaderDomainModel()
-        )
-        is Action.ReaderChapterContentsLoadSuccess -> state.copy(
-                isLoading = false,
-                errorMsg = "",
-                readerDomainModel = viewAction.readerDomainModel
-        )
-        is Action.ReaderChapterContentsLoadFailure -> state.copy(
-                isLoading = false,
-                errorMsg = "错误：加载章节内容列表失败",
-                readerDomainModel = ReaderDomainModel(chapterContentsErr = true)
-        )
-        is Action.ReaderChaptersLoadSuccess -> state.copy(
-                isLoading = false,
-                errorMsg = "",
-                readerDomainModel = viewAction.readerDomainModel
-        )
-        is Action.ReaderChaptersLoadFailure -> state.copy(
-                isLoading = false,
-                errorMsg = "错误：加载章节列表失败",
-                readerDomainModel = ReaderDomainModel()
-        )
-        is Action.ReaderSignsLoadSuccess -> state.copy(
-                isLoading = false,
-                errorMsg = "",
-                readerDomainModel = viewAction.readerDomainModel
-        )
-        is Action.ReaderSignsLoadFailure -> state.copy(
-                isLoading = false,
-                errorMsg = "错误：加载书签列表失败",
-                readerDomainModel = ReaderDomainModel()
-        )
-        is Action.ReaderLoadSuccess -> state.copy(
-                isLoading = false,
-                errorMsg = "",
-                readerDomainModel = ReaderDomainModel()
-        )
-        is Action.ReaderLoadFailure -> state.copy(
-                isLoading = false,
-                errorMsg = "错误：保存阅读记录/添加书签/删除书签，失败",
-                readerDomainModel = ReaderDomainModel()
-        )
-    }
+    override fun onReduceState(viewAction: Action) = ViewState()
 }
 
-internal data class ViewState(
-        val isLoading: Boolean = true,
-        val errorMsg: String = "",
-        val readerDomainModel: ReaderDomainModel = ReaderDomainModel()
-) : BaseViewState
+internal class ViewState : BaseViewState
 
-internal sealed class Action : BaseAction {
-    class ReaderBookRecordLoadSuccess(val readerDomainModel: ReaderDomainModel) : Action()
-    object ReaderBookRecordLoadFailure : Action()
-
-    class ReaderBookLoadSuccess(val readerDomainModel: ReaderDomainModel) : Action()
-    object ReaderBookLoadFailure : Action()
-
-    class ReaderChapterContentsLoadSuccess(val readerDomainModel: ReaderDomainModel) : Action()
-    object ReaderChapterContentsLoadFailure : Action()
-
-    class ReaderChaptersLoadSuccess(val readerDomainModel: ReaderDomainModel) : Action()
-    object ReaderChaptersLoadFailure : Action()
-
-    class ReaderSignsLoadSuccess(val readerDomainModel: ReaderDomainModel) : Action()
-    object ReaderSignsLoadFailure : Action()
-
-    object ReaderLoadSuccess: Action()
-    object ReaderLoadFailure : Action()
-}
+internal sealed class Action : BaseAction

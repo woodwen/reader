@@ -4,6 +4,7 @@ import androidx.lifecycle.*
 import com.woodnoisu.reader.library.base.BuildConfig
 import com.woodnoisu.reader.library.base.presentation.extension.asLiveData
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.flow.Flow
 import kotlin.properties.Delegates
 
@@ -16,8 +17,14 @@ abstract class BaseViewModel<ViewState : BaseViewState, ViewAction : BaseAction>
         }
     }
 
-    fun <T> Flow<T>.asLiveDataOnViewModelScope(): LiveData<T> {
-        return asLiveData(viewModelScope.coroutineContext + Dispatchers.IO)
+    protected val _toast: MutableLiveData<String> = MutableLiveData()
+    val toast: LiveData<String> get() = _toast
+
+    protected val _isLoading: MutableLiveData<Boolean> = MutableLiveData()
+    val isLoading: LiveData<Boolean> get() = _isLoading
+
+    fun toastMsg(msg: String) {
+        _toast.value = msg
     }
 
     private val stateMutableLiveData = MutableLiveData<ViewState>()

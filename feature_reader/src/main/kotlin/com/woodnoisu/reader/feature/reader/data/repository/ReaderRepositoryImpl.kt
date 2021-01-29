@@ -2,11 +2,10 @@ package com.woodnoisu.reader.feature.reader.data.repository
 
 import com.woodnoisu.reader.feature.reader.data.model.toBean
 import com.woodnoisu.reader.feature.reader.data.model.toDomainModel
-import com.woodnoisu.reader.feature.reader.domain.model.ReaderBookDomainModel
-import com.woodnoisu.reader.feature.reader.domain.model.ReaderBookSignDomainModel
+import com.woodnoisu.reader.feature.reader.domain.model.*
 import com.woodnoisu.reader.feature.reader.domain.model.ReaderChapterDomainModel
-import com.woodnoisu.reader.feature.reader.domain.model.ReaderDomainModel
-import com.woodnoisu.reader.feature.reader.domain.model.ReaderRecordDomainModel
+import com.woodnoisu.reader.feature.reader.domain.model.RequestGetBookDomainModel
+import com.woodnoisu.reader.feature.reader.domain.model.RequestGetChapterContentsDomainModel
 import com.woodnoisu.reader.feature.reader.domain.repository.ReaderRepository
 import com.woodnoisu.reader.library.base.model.*
 import com.woodnoisu.reader.library.base.network.HtmlClient
@@ -15,6 +14,9 @@ import com.woodnoisu.reader.library.base.persistence.BookSignDao
 import com.woodnoisu.reader.library.base.persistence.ChapterDao
 import com.woodnoisu.reader.library.base.persistence.ReadRecordDao
 import com.woodnoisu.reader.library.base.utils.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOn
 import java.io.*
 import java.util.regex.Matcher
 import java.util.regex.Pattern
@@ -34,137 +36,231 @@ internal class ReaderRepositoryImpl (
     /**
      * 获取书籍
      */
-    override suspend fun getBook(bookId: String) : ReaderDomainModel {
-        return ReaderDomainModel(readerBookDomainModel = bookDao.getById(bookId)?.toDomainModel())
-    }
-
+    override suspend fun getBook(
+        request: RequestGetBookDomainModel,
+        onSuccess: (String) -> Unit,
+        onError: (String) -> Unit
+    ) = flow {
+        try {
+            val bookId = request.bookId
+            bookDao.getById(bookId)
+            val book = bookDao.getById(bookId)
+            if (book != null) {
+                emit(ResponseGetBookDomainModel(book.toDomainModel()))
+                onSuccess("获取书籍成功")
+            } else {
+                onError("获取书籍失败，未在本地库中找到书籍")
+            }
+        } catch (e: Exception) {
+            onError(e.toString())
+        }
+    }.flowOn(Dispatchers.IO)
 
     /**
-     * 获取章节内容（多）
+     * 获取章节列表内容
      */
     override suspend fun getChapterContents(
-            chapters:List<ReaderChapterDomainModel>
-    ): ReaderDomainModel{
-        val newChapters = arrayListOf<ReaderChapterDomainModel>()
-        for (bean in chapters) {
-            val chapterBean = getChapterContent(bean)
-            newChapters.add(chapterBean)
-            //存储章节内容到本地文件
-            if (chapterBean.content.isNotBlank()) {
-                saveChapterInfo(
+        request: RequestGetChapterContentsDomainModel,
+        onNext: (Int) -> Unit,
+        onSuccess: (String) -> Unit,
+        onError: (String) -> Unit
+    ) = flow {
+        try {
+            val chapters = request.chapters
+            val newChapters = arrayListOf<ReaderChapterDomainModel>()
+            for (bean in chapters) {
+                val chapterBean = getChapterContent(bean)
+                newChapters.add(chapterBean)
+                //存储章节内容到本地文件
+                if (chapterBean.content.isNotBlank()) {
+                    setChapter(
                         MD5Util.strToMd5By16(chapterBean.bookUrl),
                         chapterBean.name,
                         chapterBean.content
-                )
-               // onNext(chapterBean.id)
+                    )
+                    onNext(chapterBean.id)
+                }
             }
+            emit(ResponseGetChapterContentsDomainModel(newChapters))
+            onSuccess("请求章节内容成功")
+        } catch (e: Exception) {
+            onError(e.toString())
         }
-        return ReaderDomainModel(readerChapterContentDomainModels = newChapters.toList())
-    }
+    }.flowOn(Dispatchers.IO)
 
     /**
      * 获取章节列表
      */
-    override suspend fun getChapters(readerBookDomainModel: ReaderBookDomainModel,
-                                     start: Int,
-                                     limit:Int,
-                                     cacheContents:Boolean): ReaderDomainModel{
-        var readerChapterDomainModels:List<ReaderChapterDomainModel>?= null
-        var cacheContents = false
-        val bookFilePath = readerBookDomainModel.bookFilePath
-        if (bookFilePath.isNullOrBlank()) {
-            // 获取本地缓存章节数量
-            val count = chapterDao.getListCountByBookUrl(readerBookDomainModel.url)
-            if(count==0||start >= count) {
-                // 如果本地没有缓存则从网络获取,如果本地有数据，获取最新章节
-                val remoteChapters =
-                        htmlClient.getChapterList(readerBookDomainModel.shopName,
-                                readerBookDomainModel.url,
-                                readerBookDomainModel.chaptersUrl,
-                                start,
-                                limit)
-                if (remoteChapters.isNotEmpty()) {
-                    // 如果获取成功则缓存到数据库
-                    chapterDao.insertList(remoteChapters)
+    override suspend fun getChapters(
+        request: RequestGetChaptersDomainModel,
+        onSuccess: (String) -> Unit,
+        onError: (String) -> Unit
+    ) = flow {
+        try {
+            val mCollBook = request.book
+            val start = request.start
+            val limit = request.limit
+            val cacheContents = request.cacheContents
+            val bookFilePath = mCollBook.bookFilePath
+            if (bookFilePath.isNullOrBlank()) {
+                // 获取本地缓存章节数量
+                val count = chapterDao.getListCountByBookUrl(mCollBook.url)
+                if (count == 0 || start >= count) {
+                    // 如果本地没有缓存则从网络获取,如果本地有数据，获取最新章节
+                    val remoteChapters =
+                        htmlClient.getChapterList(
+                            mCollBook.shopName,
+                            mCollBook.url,
+                            mCollBook.chaptersUrl,
+                            start,
+                            limit
+                        )
+                    if (remoteChapters.isNotEmpty()) {
+                        // 如果获取成功则缓存到数据库
+                        chapterDao.insertList(remoteChapters)
+                    }
                 }
-            }
-            // 获取网络章节列表的解析
-            val chaptersList = chapterDao
-                    .getListByBookUrl(readerBookDomainModel.url, start = start, limit = limit)
-            readerChapterDomainModels = chaptersList.map { it.toDomainModel() }
-            cacheContents = cacheContents
+                // 获取网络章节列表的解析
+                val chaptersList = chapterDao
+                    .getListByBookUrl(mCollBook.url, start = start, limit = limit)
 
-        } else {
-            // 本地书籍的章节列表解析
-            val chaptersList = loadChapters(bookFilePath)
-            readerChapterDomainModels = chaptersList.map { it.toDomainModel() }
-            cacheContents = cacheContents
+                emit(
+                    ResponseGetChaptersDomainModel(
+                        chaptersList.map { it.toDomainModel() },
+                        cacheContents
+                    )
+                )
+            } else {
+                // 本地书籍的章节列表解析
+                val chaptersList = loadChapters(bookFilePath)
+                emit(
+                    ResponseGetChaptersDomainModel(
+                        chaptersList.map { it.toDomainModel() },
+                        cacheContents
+                    )
+                )
+            }
+            onSuccess("获取章节列表成功")
+        } catch (e: Exception) {
+            onError(e.toString())
         }
-        return ReaderDomainModel(readerChapterDomainModels=readerChapterDomainModels,
-                                 cacheContents=cacheContents)
-    }
+    }.flowOn(Dispatchers.IO)
 
     /**
      * 获取阅读记录
      */
-    override suspend fun getBookRecord(bookUrl: String): ReaderDomainModel {
-        var bean:ReadRecordBean?=null
-        val md5 = MD5Util.strToMd5By16(bookUrl)
-        if (!md5.isNullOrBlank()) {
-            bean = readRecordDao.getByMd5(md5)
+    override suspend fun getBookRecord(
+        request: RequestGetBookRecordDomainModel,
+        onSuccess: (String) -> Unit,
+        onError: (String) -> Unit
+    ) = flow {
+        try {
+            val bookUrl = request.bookUrl
+            val md5 = MD5Util.strToMd5By16(bookUrl)
+            if (!md5.isNullOrBlank()) {
+                var bean = readRecordDao.getByMd5(md5)
+                if (bean == null) {
+                    bean = ReadRecordBean()
+                }
+                emit(ResponseGetBookRecordDomainModel(bean.toDomainModel()))
+                onSuccess("获取阅读记录成功")
+            }
+        } catch (e: Exception) {
+            onError(e.toString())
         }
-        if (bean == null) {
-            bean = ReadRecordBean()
-        }
-        return ReaderDomainModel(readerRecordDomainModel = bean.toDomainModel() )
-    }
+    }.flowOn(Dispatchers.IO)
 
     /**
      * 获取书签列表
      */
-    override suspend fun getSigns(bookUrl: String): ReaderDomainModel {
-        val bookSigns = bookSignDao.getListByBookUrl(bookUrl)
-        val readerBookSignDomainModels = bookSigns.toList().map { it.toDomainModel() }
-        return ReaderDomainModel(readerBookSignDomainModels =  readerBookSignDomainModels)
-    }
+    override suspend fun getSigns(
+        request: RequestGetSignsDomainModel,
+        onSuccess: (String) -> Unit,
+        onError: (String) -> Unit
+    ) = flow {
+        try {
+            val bookUrl = request.bookUrl
+            val bookSigns = bookSignDao.getListByBookUrl(bookUrl)
+            emit(ResponseGetSignsDomainModel(bookSigns.map { it.toDomainModel() }))
+            onSuccess("获取书签列表成功")
+        } catch (e: Exception) {
+            onError(e.toString())
+        }
+    }.flowOn(Dispatchers.IO)
 
     /**
      * 保存阅读记录
      */
-    override suspend fun saveBookRecord(mBookRecord: ReaderRecordDomainModel) {
-        val md5 = MD5Util.strToMd5By16(mBookRecord.bookUrl)
-        if (!md5.isNullOrBlank()) {
-            mBookRecord.bookMd5 = md5
-            readRecordDao.insert(mBookRecord.toBean())
+    override suspend fun setBookRecord(
+        request: RequestSetBookRecordDomainModel,
+        onSuccess: (String) -> Unit,
+        onError: (String) -> Unit
+    ) = flow {
+        try {
+            val mBookRecord = request.record
+            val md5 = MD5Util.strToMd5By16(mBookRecord.bookUrl)
+            if (!md5.isNullOrBlank()) {
+                mBookRecord.bookMd5 = md5
+                readRecordDao.insert(mBookRecord.toBean())
+                emit(ResponseSetBookRecordDomainModel(mBookRecord))
+                onSuccess("保存阅读记录成功")
+            } else {
+                onError("计算md5码错误")
+            }
+        } catch (e: Exception) {
+            onError(e.toString())
         }
-    }
-
+    }.flowOn(Dispatchers.IO)
 
     /**
      * 添加书签
      */
-    override suspend fun addSign(bookUrl: String, chapterUrl: String, chapterName: String) {
-        val bookSignModel = bookSignDao.getByChapterUrl(chapterUrl)
-        if (bookSignModel == null) {
-            val bookSign = BookSignBean(bookUrl = bookUrl,
-                                        chapterUrl = chapterUrl,
-                                        chapterName = chapterName)
-            bookSignDao.insert(bookSign)
+    override suspend fun addSign(
+        request: RequestAddSignDomainModel,
+        onSuccess: (String) -> Unit,
+        onError: (String) -> Unit
+    ) = flow {
+        try {
+            val bookSign = BookSignBean()
+            bookSign.bookUrl = request.bookUrl
+            bookSign.chapterUrl = request.chapterUrl
+            bookSign.chapterName = request.chapterName
+            val bookSignModel = bookSignDao.getByChapterUrl(bookSign.chapterUrl)
+            if (bookSignModel == null) {
+                bookSignDao.insertSome(bookSign)
+                emit(ResponseAddSignDomainModel(bookSign.toDomainModel()))
+                onSuccess("添加书签成功")
+            } else {
+                onError("本章节书签已经存在")
+            }
+        } catch (e: Exception) {
+            onError(e.toString())
         }
-    }
+    }.flowOn(Dispatchers.IO)
 
     /**
-     * 删除书签
+     * 删除书签列表
      */
-    override suspend fun deleteSigns(bookSignBean: List<ReaderBookSignDomainModel>) {
-        bookSignDao.deleteList(bookSignBean.map { it.toBean()})
-    }
+    override suspend fun deleteSigns(
+        request: RequestDeleteSignsDomainModel,
+        onSuccess: (String) -> Unit,
+        onError: (String) -> Unit
+    ) = flow {
+        try {
+            val signs = request.signs
+            bookSignDao.deleteList(signs.map { it.toBean() })
+            emit(ResponseDeleteSignsDomainModel(signs))
+            onSuccess("删除书签成功")
+        } catch (e: Exception) {
+            onError(e.toString())
+        }
+    }.flowOn(Dispatchers.IO)
 
     /**
-     * 获取章节内容（单）
+     * 获取章节内容
      */
     private suspend fun getChapterContent(
-            chapterBean: ReaderChapterDomainModel
+        chapterBean: ReaderChapterDomainModel
     ): ReaderChapterDomainModel {
         // 从数据库中获取
         val url = chapterBean?.url
@@ -172,12 +268,12 @@ internal class ReaderRepositoryImpl (
             val chapterContent = chapterDao.getContentByUrl(chapterBean.url)
             if (chapterContent.isNullOrBlank()) {
                 //如果未从数据库中获取，则从网络获取
-                val content = htmlClient.getChapterContent(chapterBean.shopName,chapterBean.url)
+                val content = htmlClient.getChapterContent(chapterBean.shopName, chapterBean.url)
                 if (!content.isNullOrBlank()) {
                     chapterBean.content = content
                     // 存取到数据库中
                     val chapterModel =
-                            ChapterBean()
+                        ChapterBean()
                     chapterModel.id = chapterBean.id
                     chapterModel.name = chapterBean.name
                     chapterModel.url = chapterBean.url
@@ -232,7 +328,7 @@ internal class ReaderRepositoryImpl (
                 break
             }
         }
-        if(!hasChapter){
+        if (!hasChapter) {
             //重置指针位置
             bookStream.seek(0)
         }
@@ -426,7 +522,7 @@ internal class ReaderRepositoryImpl (
      * @param fileName
      * @param content
      */
-    private fun saveChapterInfo(folderName: String, fileName: String, content: String) {
+    private fun setChapter(folderName: String, fileName: String, content: String) {
         val filePath = (Constant.BOOK_CACHE_PATH + folderName
                 + File.separator + fileName + FileUtil.SUFFIX_NB)
         if (File(filePath).exists()) {
