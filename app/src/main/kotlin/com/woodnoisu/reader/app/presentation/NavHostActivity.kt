@@ -1,6 +1,7 @@
 package com.woodnoisu.reader.app.presentation
 
 import android.os.Bundle
+import android.view.KeyEvent
 import androidx.core.view.isVisible
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.ui.setupWithNavController
@@ -22,6 +23,16 @@ class NavHostActivity : BaseActivity(R.layout.activity_nav_host) {
         initBottomNavigation()
         initNavManager()
     }
+
+    override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
+        if (keyCode == KeyEvent.KEYCODE_BACK) {
+            // 在这里，拦截或者监听Android系统的返回键事件。
+            // return将拦截。
+            // 不做任何处理则默认交由Android系统处理。
+        }
+        return false
+    }
+
 
     private fun initBottomNavigation() {
         bottomNav.setupWithNavController(navController)

@@ -17,10 +17,7 @@ internal val presentationModule = Kodein.Module("${MODULE_NAME}PresentationModul
 
     bind<ReaderViewModel>() with scoped<Fragment>(AndroidLifecycleScope).singleton {
         KotlinViewModelProvider.of(context) {
-            ReaderViewModel(instance(), instance(), instance(),
-                            instance(), instance(), instance(),
-                            instance(), instance(), instance(),
-                            instance())}}
+            ReaderViewModel(instance(), instance(), instance())}}
     bind() from singleton { CatalogueAdapter() }
     bind() from singleton { MarkAdapter() }
 }
