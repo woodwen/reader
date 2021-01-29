@@ -47,9 +47,9 @@ object SystemBarUtil {
      */
     fun showSystemBar(activity: Activity,isFullScreen: Boolean) {
         //显示
-        showUnStableStatusBar(activity)
+        showStableStatusBar(activity)
         if (isFullScreen) {
-            showUnStableNavBar(activity)
+            showStableNavBar(activity)
         }
     }
 
