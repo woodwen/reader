@@ -1,5 +1,5 @@
 # reader
-免费小说阅读App（模块化开发，基于Kotlin+MVVM+Kodein+Retrofit+Jsoup+Coroutines+Jetpack+Coil+Room+Mockk等架构实现）
+免费小说阅读App
 
 参考项目
 
@@ -25,7 +25,7 @@
 
 # 应用简介
 
-在线/本地小说阅读器，用kotlin重写了“任阅”的阅读模块代码，优化，代码逻辑，降低内存使用率。纯kotlin开发，并使用模块化的mvvm模式开发，使得维护和扩展更方便。
+小说阅读器（模块化开发，基于Kotlin+MVVM+Kodein+Retrofit+Jsoup+Coroutines+Jetpack+Coil+Room+Mockk等架构实现），用kotlin重写了“任阅”的阅读模块代码，优化，代码逻辑，降低内存使用率。
 
 目前已有功能：
 
