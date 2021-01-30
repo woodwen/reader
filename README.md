@@ -1,5 +1,5 @@
 # reader
-免费小说阅读App
+免费小说阅读App（模块化开发，基于Kotlin+MVVM+Kodein+Retrofit+Jsoup+Coroutines+Jetpack+Coil+Room+Mockk等架构实现）
 
 参考项目
 
