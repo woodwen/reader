@@ -5,11 +5,13 @@
 
 1.android-showcase 模块化的mvvm开发 [android-showcase](https://github.com/igorwojda/android-showcase)
 
-2.NovelReader 基于"任阅"的改进追书App [NovelReader](https://github.com/newbiechen1024/NovelReader)
+2.Pokedex 单项目的mvvm开发 [Plkedex](https://github.com/skydoves/Pokedex)
 
-3.FreeNovel 基于kotlin的免费Android小说应用[FreeNovel](https://github.com/lxygithub/FreeNovel) 
+3.NovelReader 基于"任阅"的改进追书App [NovelReader](https://github.com/newbiechen1024/NovelReader)
 
-4.OKBook kotlin + 协程 + MVVM 模式来编写的看小说APP [OKBook](https://gitee.com/xcode_xiao/OKBook)
+4.FreeNovel 基于kotlin的免费Android小说应用[FreeNovel](https://github.com/lxygithub/FreeNovel) 
+
+5.OKBook kotlin + 协程 + MVVM 模式来编写的看小说APP [OKBook](https://gitee.com/xcode_xiao/OKBook)
 
 # 应用展示
 
