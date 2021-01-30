@@ -5,7 +5,7 @@
 
 1.android-showcase 模块化的mvvm开发 [android-showcase](https://github.com/igorwojda/android-showcase)
 
-2.Pokedex 单项目的mvvm开发 [Pokedex](https://github.com/skydoves/Pokedex)
+2.Pokedex 单项目 mvvm，flow [Pokedex](https://github.com/skydoves/Pokedex)
 
 3.NovelReader 基于"任阅"的改进追书App [NovelReader](https://github.com/newbiechen1024/NovelReader)
 
