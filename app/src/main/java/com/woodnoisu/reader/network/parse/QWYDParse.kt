@@ -51,7 +51,7 @@ class QWYDParse(htmlService: HtmlService):
             if (document != null) {
                 val pageCountTxt = document.select(".list_page span")[1].html()
                 val arr = pageCountTxt.split("/")
-                currentPage = arr[0].trim().toInt() + 1
+                currentPage = arr[0].trim().toInt()
                 totalPage = arr[1].trim().toInt()
 
                 val list = document.select(".box .top")
@@ -106,7 +106,7 @@ class QWYDParse(htmlService: HtmlService):
             if (document != null) {
                 val pageCountTxt = document.select(".list_page span")[1].html()
                 val arr = pageCountTxt.split("/")
-                currentPage = arr[0].trim().toInt() + 1
+                currentPage = arr[0].trim().toInt()
                 totalPage = arr[1].trim().toInt()
                 val list = document.select(".box .top")
                 for (it in list) {

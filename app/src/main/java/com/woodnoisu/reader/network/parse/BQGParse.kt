@@ -49,7 +49,7 @@ class BQGParse(htmlService: HtmlService):
                 val pageCountTxt = document.select(".hd")[0].html()
                 val arrTemp = pageCountTxt.split("当前：")
                 val arr = arrTemp[arrTemp.count()-1].split("/")
-                currentPage = arr[0].trim().toInt() + 1
+                currentPage = arr[0].trim().toInt()
                 totalPage = arr[1].trim().toInt()
 
                 val list = document.select(".txt-list li")

@@ -221,7 +221,7 @@ class SquareFragment: BaseFragment() {
                 squareAdapter.addItems(bookList)
             }
         }
-        viewModel.fetchPage(currentPage, totalPage)
+        viewModel.fetchPage(currentPage + 1, totalPage)
         refresh_layout.isRefreshing = false
     }
 
