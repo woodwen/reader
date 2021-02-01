@@ -5,6 +5,10 @@
 
 [多模块版](https://github.com/woodwen/reader/tree/dev-multiple)
 
+# 可能遇到的编译问题
+
+如果是从多项目版本切换过来的，会在单项目版本中多很多多余的文件夹（buildSrc文件夹，feature系列文件夹，library系列文件夹，各种build文件夹），删除后再编译
+
 # 以下为框架相关
 
 # 项目特点
