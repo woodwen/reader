@@ -100,7 +100,7 @@ class SquareFragment: BaseFragment() {
                     inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_CAP_WORDS
                 ) { _, text ->
                     val keyword = text.toString()
-                    if (!keyword.isBlank()) {
+                    if (keyword.isNotBlank()) {
                         searchData(keyWord = keyword)
                     } else {
                         viewModel.toastMsg("关键字不能为空")
@@ -112,7 +112,7 @@ class SquareFragment: BaseFragment() {
 
         // 刷新事件
         refresh_layout.setOnRefreshListener {
-            initData()
+            viewModel.fetchSearch(1)
         }
 
         // 点击项目事件

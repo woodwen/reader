@@ -39,7 +39,7 @@ class MeFragment : BaseFragment() {
         clear_cache.setOnClickListener { v ->
             AlertDialog.Builder(activity)
                 .setMessage("确定要清除缓存么(将会删除所有已缓存章节)？").setNegativeButton("取消", null)
-                .setPositiveButton("确定") { dialog, which ->
+                .setPositiveButton("确定") { _, _ ->
                     FileUtil.deleteFile(Constant.BOOK_CACHE_PATH)
                     tv_cache.text = "0kb"
                 }.show()
@@ -50,7 +50,7 @@ class MeFragment : BaseFragment() {
             startActivity(
                 Intent(
                     Intent.ACTION_VIEW,
-                    Uri.parse("https://www.baidu.com")
+                    Uri.parse("https://github.com/woodwen/reader")
                 )
             )
         }

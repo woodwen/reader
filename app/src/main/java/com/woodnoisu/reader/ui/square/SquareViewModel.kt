@@ -130,18 +130,19 @@ class SquareViewModel @AssistedInject constructor(
     }
 
     @MainThread
-    fun fetchSearch() {
-        var page = 1
+    fun fetchSearch(page:Int=-1) {
+        var p = 1
         var keyword = ""
         var type = ""
-        if (_currentPage.value != null) page = _currentPage.value!!
+        if (page==-1&&_currentPage.value != null) p = _currentPage.value!!
+
         if (_keyWord.value != null) keyword = _keyWord.value!!
         if (_type.value != null) type = _type.value!!
 
         if (keyword.isNotBlank()) {
-            fetchSearchKeyWord(keyword, page)
+            fetchSearchKeyWord(keyword, p)
         } else {
-            fetchSearchType(type, page)
+            fetchSearchType(type, p)
         }
     }
 
