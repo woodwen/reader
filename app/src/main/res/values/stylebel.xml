@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="ContextTitle">
+        <attr name="leftTextVisible" format="boolean" />
+        <attr name="leftText" format="string" />
+        <attr name="leftTextSize" format="integer" />
+        <attr name="leftTextColor" format="color" />
+
+        <attr name="leftImg" format="reference" />
+        <attr name="leftImgVisible" format="boolean" />
+
+        <attr name="titleText" format="string" />
+        <attr name="titleTextSize" format="integer" />
+        <attr name="titleTextColor" format="color" />
+        <attr name="titleVisible" format="boolean" />
+        <attr name="titleRightImg" format="reference" />
+
+        <attr name="rightImg" format="reference" />
+        <attr name="rightImgVisible" format="boolean" />
+
+        <attr name="rightTextVisible" format="boolean" />
+        <attr name="rightText" format="string" />
+        <attr name="rightTextSize" format="integer" />
+        <attr name="rightTextColor" format="color" />
+
+        <attr name="titleScrllo" format="boolean" />
+    </declare-styleable>
+    <declare-styleable name="CircleView">
+        <attr name="color" format="color" />
+    </declare-styleable>
+</resources>

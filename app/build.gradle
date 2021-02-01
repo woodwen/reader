@@ -1,0 +1,175 @@
+apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+apply plugin: 'kotlin-android-extensions'
+apply plugin: 'kotlin-kapt'
+apply plugin: 'dagger.hilt.android.plugin'
+
+apply from: "$rootDir/dependencies.gradle"
+
+android {
+    compileSdkVersion versions.compileSdk
+    defaultConfig {
+        applicationId "com.woodnoisu.reader"
+        minSdkVersion versions.minSdk
+        targetSdkVersion versions.compileSdk
+        versionCode versions.versionCode
+        versionName versions.versionName
+        vectorDrawables.useSupportLibrary = true
+        testInstrumentationRunner "com.woodnoisu.reader.AppTestRunner"
+
+        javaCompileOptions {
+            annotationProcessorOptions {
+                arguments += ["room.schemaLocation" : "$projectDir/schemas".toString()]
+            }
+        }
+        javaCompileOptions {
+            annotationProcessorOptions {
+                arguments["dagger.hilt.disableModulesHaveInstallInCheck"] = "true"
+            }
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+    kotlinOptions {
+        jvmTarget = JavaVersion.VERSION_1_8.toString()
+    }
+    buildFeatures {viewBinding true}
+    lintOptions {
+        abortOnError false
+    }
+    sourceSets {
+        androidTest.java.srcDirs += "src/test-common/java"
+        test.java.srcDirs += "src/test-common/java"
+        test.assets.srcDirs += files("$projectDir/schemas".toString())
+    }
+    testOptions {
+        unitTests {
+            includeAndroidResources = true
+            returnDefaultValues = true
+        }
+    }
+    packagingOptions {
+        exclude 'META-INF/DEPENDENCIES'
+        exclude 'META-INF/LICENSE'
+        exclude 'META-INF/LICENSE.txt'
+        exclude 'META-INF/license.txt'
+        exclude 'META-INF/NOTICE'
+        exclude 'META-INF/NOTICE.txt'
+        exclude 'META-INF/notice.txt'
+        exclude 'META-INF/ASL2.0'
+        exclude("META-INF/*.kotlin_module")
+    }
+    tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).all {
+        kotlinOptions.freeCompilerArgs += ["-Xopt-in=kotlin.time.ExperimentalTime"]
+        kotlinOptions.freeCompilerArgs += ["-Xopt-in=kotlinx.coroutines.ExperimentalCoroutinesApi"]
+    }
+}
+
+dependencies {
+    implementation fileTree(dir: "libs", include: ["*.jar"])
+
+    // android supports
+    implementation "com.google.android.material:material:$versions.materialVersion"
+    implementation "androidx.constraintlayout:constraintlayout:$versions.constraintVersion"
+
+    // architecture components
+    implementation "androidx.fragment:fragment-ktx:$versions.fragmentVersion"
+    implementation "androidx.lifecycle:lifecycle-extensions:$versions.lifecycleVersion"
+    implementation "androidx.lifecycle:lifecycle-livedata-ktx:$versions.lifecycleVersion"
+    implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:$versions.lifecycleVersion"
+    implementation "androidx.lifecycle:lifecycle-viewmodel-savedstate:$versions.lifecycleVersion"
+    implementation "androidx.room:room-runtime:$versions.roomVersion"
+    implementation "androidx.room:room-ktx:$versions.roomVersion"
+    kapt "androidx.room:room-compiler:$versions.roomVersion"
+    testImplementation "androidx.arch.core:core-testing:$versions.archCompomentVersion"
+
+    // startup
+    implementation "androidx.startup:startup-runtime:$versions.startupVersion"
+
+    // dagger
+    implementation "com.google.dagger:hilt-android:$versions.hiltCoreVersion"
+    implementation "androidx.hilt:hilt-common:$versions.hiltVersion"
+    implementation "androidx.hilt:hilt-lifecycle-viewmodel:$versions.hiltVersion"
+    kapt "com.google.dagger:hilt-compiler:$versions.hiltCoreVersion"
+    kapt "androidx.hilt:hilt-compiler:$versions.hiltVersion"
+    androidTestImplementation "com.google.dagger:hilt-android-testing:$versions.hiltCoreVersion"
+    kaptAndroidTest "com.google.dagger:hilt-compiler:$versions.hiltCoreVersion"
+
+    // network
+    implementation "com.squareup.retrofit2:retrofit:$versions.retrofitVersion"
+    implementation "com.squareup.retrofit2:converter-moshi:$versions.retrofitVersion"
+    implementation "com.squareup.okhttp3:logging-interceptor:$versions.okhttpVersion"
+    testImplementation "com.squareup.okhttp3:mockwebserver:$versions.okhttpVersion"
+
+    // moshi
+    implementation "com.squareup.moshi:moshi-kotlin:$versions.moshiVersion"
+    kapt "com.squareup.moshi:moshi-kotlin-codegen:$versions.moshiVersion"
+
+    // coroutines
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:$versions.coroutinesVersion"
+    testImplementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:$versions.coroutinesVersion"
+    testImplementation "org.jetbrains.kotlinx:kotlinx-coroutines-test:$versions.coroutinesVersion"
+
+//    // glide
+//    implementation "com.github.bumptech.glide:glide:$versions.glideVersion"
+//    implementation "com.github.florent37:glidepalette:$versions.glidePaletteVersion"
+//    kapt "com.github.bumptech.glide:compiler:$versions.glideVersion"
+
+    // unit test
+    testImplementation "junit:junit:$versions.junitVersion"
+    testImplementation "androidx.test:core:$versions.androidxTest"
+    testImplementation "com.nhaarman.mockitokotlin2:mockito-kotlin:$versions.mockitoKotlinVersion"
+    testImplementation "org.mockito:mockito-inline:$versions.mockitoInlineVersion"
+    testImplementation "app.cash.turbine:turbine:$versions.turbineVersion"
+    testImplementation "org.robolectric:robolectric:$versions.robolectricVersion"
+    androidTestImplementation "com.google.truth:truth:$versions.truthVersion"
+    androidTestImplementation "androidx.test.ext:junit:$versions.androidxTestJunit"
+    androidTestImplementation "com.android.support.test:runner:$versions.androidTestRunner"
+    androidTestImplementation "androidx.test.espresso:espresso-core:$versions.espressoVersion"
+
+
+    /******************************* other ********************************/
+
+    // kotlin
+    implementation "org.jetbrains.kotlin:kotlin-stdlib:$versions.kotlin"
+
+    // 网络相关
+    implementation "com.squareup.okhttp3:okhttp:$versions.okhttpVersion"
+    implementation "com.jakewharton.retrofit:retrofit2-kotlin-coroutines-adapter:$versions.retrofitCoroutinesVersion"
+    implementation "org.jsoup:jsoup:$versions.jsoupVersion"
+
+    // 界面框架
+    implementation "androidx.appcompat:appcompat:$versions.appcompatVersion"
+    implementation "androidx.core:core-ktx:$versions.coreKtxVersion"
+    implementation "androidx.viewpager2:viewpager2:$versions.viewpager2Version"
+    implementation "androidx.swiperefreshlayout:swiperefreshlayout:$versions.swiperefreshlayoutVersion"
+    implementation "androidx.recyclerview:recyclerview:$versions.recyclerviewVersion"
+    implementation "com.github.kingideayou:tagcloudview:$versions.tagcloudviewVersion"
+    implementation "com.hyman:flowlayout-lib:$versions.flowlayoutVersion"
+    implementation "androidx.activity:activity-ktx:$versions.activityVersion"
+    implementation "androidx.drawerlayout:drawerlayout:$versions.drawerlayoutVersion"
+    // 弹出框
+    implementation "com.afollestad.material-dialogs:core:$versions.afollestadVersion"
+    implementation "com.afollestad.material-dialogs:bottomsheets:$versions.afollestadVersion"
+    implementation "com.afollestad.material-dialogs:input:$versions.afollestadVersion"
+    implementation "com.afollestad.material-dialogs:lifecycle:$versions.afollestadVersion"
+
+    //图片库
+    implementation "io.coil-kt:coil:$versions.coilVersion"
+    // 处理权限相关
+    //implementation "pub.devrel:easypermissions:$versions.easypermissionsVersion"
+
+//    // RxJava
+//    implementation "io.reactivex.rxjava2:rxkotlin:$versions.rxkotlinVersion"
+//    api "io.reactivex.rxjava2:rxandroid:$versions.rxandroidVersion"
+//    api "io.reactivex.rxjava2:rxjava:$versions.rxjavaVersion"
+//    api "org.reactivestreams:reactive-streams:$versions.reactivestreamsVersion"
+
+    // 其他
+    //implementation "androidx.multidex:multidex:$versions.multidexVersion"
+    //implementation project(path: ':readerlib')
+}
+
+apply from: "$rootDir/spotless.gradle"
