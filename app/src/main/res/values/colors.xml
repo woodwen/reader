@@ -1,11 +1,99 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="colorPrimary">@color/outer_space</color>
-    <color name="colorPrimaryDark">@color/shark</color>
-    <color name="colorAccent">@color/red_orange</color>
+    <color name="colorPrimary">#008577</color>
+    <color name="colorPrimaryDark">#00574B</color>
+    <color name="colorAccent">#D81B60</color>
 
-    <color name="iconColor">@color/white</color>
-    <color name="textColor">@color/white</color>
+
+    <color name="black">#000000</color>
+    <color name="black_text">#393C46</color>
+    <color name="black_text_light">#606372</color>
+    <color name="black_text_1">#9296A6</color>
+    <color name="gray_text">#969696</color>
+    <color name="list_item_division">#EFF0F4</color>
+
+    <!--华丽的分割线-->
+    <color name="redmsg_bg">#FF6C6C</color>
+    <color name="gray_text_dark">#606372</color>
+    <color name="gray_input_send">#9296A6</color>
+    <color name="gray_bg">#F0F0F0</color>
+    <color name="voice_bg">#E4EDF6</color>
+    <color name="voice_txt">#B0C7DC</color>
+
+    // 分割线
+    <color name="white">#ffffffff</color>
+    <color name="a8white">#ccffffff</color>
+    <color name="text_black">#393C46</color>
+    <color name="text_grey">#9296A6</color>
+    <color name="text_hint">#cccccc</color>
+    <color name="transparent">#00000000</color>
+    <color name="list_select">#ececec</color>
+    <color name="light_grey">#f7f7f7</color>
+    <color name="gray">#EEEEEE</color>
+    <color name="shadow">#cc000000</color>
+
+
+    <color name="text_gray1">#606372</color>
+
+
+    <color name="text_color">#393C46</color>
+    <color name="text_fail">#FF6C6C</color>
+
+
+    <color name="colorBlue">#5086DF</color>
+    <!--day-->
+    <color name="colorSelect">#498EFF</color>
+    <color name="colorNoSelect">#8B8484</color>
+
+    <!--一级标题-->
+    <color name="colorTitle">#212121</color>
+    <!--二级标题-->
+    <color name="smallColor">#262626</color>
+    <!--三级标题-->
+    <color name="colorSubTitle">#A8ABB8</color>
+    <!--描述-->
+    <color name="colorDesTitle">#707177</color>
+
+    <color name="colorLine">#F0F0F0</color>
+    <color name="colorSearchBg">#F5F5F5</color>
+    <color name="colorSearchText">#969696</color>
+
+    <!--通用背景色-->
+    <color name="common_bg">@color/colorPrimary</color>
+    <!--通用触摸背景色-->
+    <color name="common_touch_bg">#E3E3E3</color>
+
+    <color name="read_menu_color">#FFFDF6</color>
+    <color name="read_menu_trans_color">#FCC4C4C4</color>
+    <color name="light_red">#EC4A48</color>
+    <color name="light_yellow">#B87324</color>
+
+    <!--read-->
+    <color name="read_bg_one">#EFEFF7</color>
+    <color name="read_bg_two">#CCEBCC</color>
+    <color name="read_bg_four">#CEC29C</color>
+    <color name="read_bg_five">#001C27</color>
+    <color name="read_bg_six">#DDCEC29C</color>
+
+
+    <color name="read_font_one">#383429</color>
+    <color name="read_font_two">#2F332D</color>
+    <color name="read_font_three">#92918C</color>
+    <color name="read_font_four">#2C2C2C</color>
+    <color name="read_font_five">#627176</color>
+
+    <color name="read_bg_night">#000000</color>
+    <color name="read_font_night">#99ffffff</color>
+
+    <color name="read_menu_bg">#191919</color>
+    <color name="read_menu_text">#CBCBCB</color>
+    <color name="read_bar_translucent">#88000000</color>
+
+    <color name="c_3B8848">#3B8848</color>
+    <color name="c_00000000">#00000000</color>
+    <color name="c_353535">#353535</color>
 
     <color name="main_color">@color/c_3B8848</color>
+    <color name="trans">@color/c_00000000</color>
+    <color name="main_text_color">@color/c_353535</color>
 </resources>

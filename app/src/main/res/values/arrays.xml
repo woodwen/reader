@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+  <string-array name="novelSort">
+    <item>其他分类</item>
+    <item>奇幻玄幻</item>
+    <item>武侠仙侠</item>
+    <item>都市官场</item>
+    <item>历史军事</item>
+    <item>言情穿越</item>
+    <item>灵异悬疑</item>
+    <item>游戏竞技</item>
+    <item>青春耽美</item>
+    <item>科幻同人</item>
+    <item>经典畅销</item>
+    <item>图书杂志</item>
+  </string-array>
+
+  </resources>

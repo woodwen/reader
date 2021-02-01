@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="40dp"
+    android:background="@color/main_color">
+
+    <ImageView
+        android:id="@+id/tv_search_search"
+        android:layout_width="45dp"
+        android:layout_height="40dp"
+        android:layout_marginStart="10dp"
+
+        android:padding="10dp"
+        android:src="@drawable/icon_search" />
+
+    <TextView
+        android:id="@+id/tv_search_filter"
+        android:layout_width="90dp"
+        android:layout_height="40dp"
+        android:layout_alignParentRight="true"
+        android:layout_marginEnd="10dp"
+        android:background="@color/main_color"
+        android:drawablePadding="10dp"
+        android:gravity="center"
+        android:text="奇幻玄幻"
+        android:textColor="@color/white"
+        android:textSize="15dp" />
+
+    <TextView
+        android:id="@+id/tv_search_title"
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
+        android:layout_marginStart="10dp"
+        android:layout_marginTop="10dp"
+        android:layout_marginEnd="10dp"
+        android:layout_marginBottom="10dp"
+        android:layout_toLeftOf="@id/tv_search_filter"
+        android:layout_toRightOf="@id/tv_search_search"
+        android:background="@color/main_color"
+        android:drawablePadding="10dp"
+        android:gravity="center"
+        android:paddingLeft="10dp"
+        android:paddingRight="10dp"
+        android:text="全文阅读网"
+        android:textColor="@color/white"
+        android:textSize="17dp" />
+
+</RelativeLayout>
