@@ -149,7 +149,7 @@ class SquareViewModel @AssistedInject constructor(
     fun fetchSearchType(typeName: String, page: Int) {
         _currentPage.value = page
         _keyWord.value = ""
-        if (!typeName.isBlank()) _type.value = typeName
+        if (typeName.isNotBlank()) _type.value = typeName
         searchTypeFetching.value = RequestSearchPageByType(
             _shopName.value!!,
             typeName,
@@ -160,7 +160,7 @@ class SquareViewModel @AssistedInject constructor(
     @MainThread
     fun fetchSearchKeyWord(keyword: String, page: Int) {
         _currentPage.value = page
-        if (!keyword.isBlank()) _keyWord.value = keyword
+        if (keyword.isNotBlank()) _keyWord.value = keyword
         searchKeyWordFetching.postValue(
             RequestSearchPageByKeyword(
                 _shopName.value!!,
