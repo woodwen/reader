@@ -3,6 +3,8 @@
 
 [主页](https://github.com/woodwen/reader/tree/main)
 
+[单模块版本](https://github.com/woodwen/reader/tree/dev-single)
+
 # 以下模块化框架相关
 
 # 项目特点
