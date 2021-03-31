@@ -1,8 +1,6 @@
 # reader
 免费小说阅读App
 
-[多模块版](https://github.com/woodwen/reader/tree/dev-multiple)
-
 参考项目
 
 1.Pokedex 单项目 mvvm，flow [Pokedex](https://github.com/skydoves/Pokedex)
