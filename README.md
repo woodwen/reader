@@ -1,6 +1,10 @@
 # reader
 免费小说阅读App
 
+说明
+
+使用多模块版本的编译成apk安装后发现不能运行（调试不影响），然后小弟也去尝试了官方demo的编译安装使用，也是同样的问题，所以先把主分支切为单模块版本的
+
 参考项目
 
 1.android-showcase 模块化的mvvm开发 [android-showcase](https://github.com/igorwojda/android-showcase)
