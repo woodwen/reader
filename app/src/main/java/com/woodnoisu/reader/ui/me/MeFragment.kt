@@ -5,7 +5,7 @@ import android.content.Intent
 import android.net.Uri
 import com.woodnoisu.reader.R
 import com.woodnoisu.reader.base.BaseFragment
-import com.woodnoisu.reader.utils.Constant
+import com.woodnoisu.reader.constant.Constant
 import com.woodnoisu.reader.utils.FileUtil
 import com.woodnoisu.reader.utils.SpUtil
 import kotlinx.android.synthetic.main.fragment_me.*

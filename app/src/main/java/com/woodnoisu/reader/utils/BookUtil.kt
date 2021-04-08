@@ -1,5 +1,6 @@
 package com.woodnoisu.reader.utils
 
+import com.woodnoisu.reader.constant.Constant
 import java.io.File
 
 object BookUtil {
@@ -22,7 +23,7 @@ object BookUtil {
     fun getBookFile(folderName: String?, fileName: String?): File {
         return FileUtil.getFile(
             Constant.BOOK_CACHE_PATH + folderName
-                    + File.separator + fileName + FileUtil.SUFFIX_NB
+                    + File.separator + fileName + Constant.SUFFIX_NB
         )
     }
 
@@ -36,7 +37,7 @@ object BookUtil {
     fun isChapterCached(folderName: String, fileName: String): Boolean {
         val file = File(
             Constant.BOOK_CACHE_PATH + folderName
-                    + File.separator + fileName + FileUtil.SUFFIX_NB
+                    + File.separator + fileName + Constant.SUFFIX_NB
         )
         return file.exists()
     }

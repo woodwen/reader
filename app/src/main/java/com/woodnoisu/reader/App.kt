@@ -1,7 +1,7 @@
 package com.woodnoisu.reader
 
 import android.app.Application
-import com.woodnoisu.reader.utils.Constant
+import com.woodnoisu.reader.constant.Constant
 import dagger.hilt.android.HiltAndroidApp
 import java.io.File
 

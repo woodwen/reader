@@ -15,7 +15,6 @@ import com.afollestad.materialdialogs.lifecycle.lifecycleOwner
 import com.afollestad.materialdialogs.list.listItems
 import com.woodnoisu.reader.R
 import com.woodnoisu.reader.base.BaseFragment
-import com.woodnoisu.reader.event.RVOScrollListener
 import com.woodnoisu.reader.model.*
 import com.woodnoisu.reader.ui.novelRead.NovelReadActivity
 import dagger.hilt.android.AndroidEntryPoint

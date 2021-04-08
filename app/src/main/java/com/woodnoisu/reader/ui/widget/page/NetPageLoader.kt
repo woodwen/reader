@@ -1,6 +1,6 @@
 package com.woodnoisu.reader.ui.widget.page
 
-import com.woodnoisu.reader.utils.Constant
+import com.woodnoisu.reader.constant.Constant
 import com.woodnoisu.reader.model.BookBean
 import com.woodnoisu.reader.model.ChapterBean
 import com.woodnoisu.reader.utils.BookUtil
@@ -51,7 +51,7 @@ class NetPageLoader(pageView: PageView,
     override fun getChapterReader(chapter: ChapterBean): BufferedReader? {
         val file = File(
             Constant.BOOK_CACHE_PATH + strToMd5By16(mCollBook.url)
-                    + File.separator + chapter.name + FileUtil.SUFFIX_NB
+                    + File.separator + chapter.name + Constant.SUFFIX_NB
         )
         if (!file.exists()) return null
         val reader: Reader = FileReader(file)

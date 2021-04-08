@@ -2,13 +2,12 @@ package com.woodnoisu.reader.ui.novelRead
 
 import androidx.annotation.MainThread
 import androidx.hilt.Assisted
-import androidx.hilt.lifecycle.ViewModelInject
 import androidx.lifecycle.*
 import com.woodnoisu.reader.base.BaseViewModel
 import com.woodnoisu.reader.model.*
 import com.woodnoisu.reader.repository.NovelReadRepository
 import com.woodnoisu.reader.ui.widget.page.ReadSettingManager
-import com.woodnoisu.reader.utils.Constant
+import com.woodnoisu.reader.constant.Constant
 import com.woodnoisu.reader.utils.LogUtil
 import com.woodnoisu.reader.utils.SpUtil
 import dagger.hilt.android.lifecycle.HiltViewModel

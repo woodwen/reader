@@ -1,9 +1,17 @@
 package com.woodnoisu.reader.utils
 
+import android.content.ContentResolver
+import android.content.Context
+import android.database.Cursor
+import android.net.Uri
+import android.provider.OpenableColumns
+import android.webkit.MimeTypeMap
+import androidx.core.net.toFile
 import com.woodnoisu.reader.base.ContextProvider
 import java.io.*
 import java.text.DecimalFormat
 import java.util.*
+import java.util.regex.Pattern
 
 /**
  * 文件帮助类
@@ -22,12 +30,6 @@ object FileUtil {
             const val BLANK: Byte = 0x0a
         }
     }
-
-    //采用自己的格式去设置文件，防止文件被系统文件查询到
-    const val SUFFIX_NB = ".zlj"
-    const val SUFFIX_TXT = ".txt"
-    const val SUFFIX_EPUB = ".epub"
-    const val SUFFIX_PDF = ".pdf"
 
     /**
      * 获取文件夹
@@ -232,5 +234,55 @@ object FileUtil {
      */
     fun getDownloadPath():String{
         return ContextProvider.mContext?.cacheDir?.absolutePath ?:""
+    }
+
+    fun uriToName(uri: Uri, context: Context):String{
+        val filename = when(uri.scheme){
+            ContentResolver.SCHEME_FILE -> uri.toFile().name
+            ContentResolver.SCHEME_CONTENT->{
+                val cursor = context.contentResolver.query(uri, null, null, null, null, null)
+                cursor?.let {
+                    it.moveToFirst()
+                    val displayName = it.getString(it.getColumnIndex(OpenableColumns.DISPLAY_NAME))
+                    cursor.close()
+                    displayName
+                }?:"${System.currentTimeMillis()}.${MimeTypeMap.getSingleton().getExtensionFromMimeType(context.contentResolver.getType(uri))}}"
+            }
+            else -> "${System.currentTimeMillis()}.${MimeTypeMap.getSingleton().getExtensionFromMimeType(context.contentResolver.getType(uri))}}"
+        }
+        return filename.split('.')[0]
+    }
+
+    fun getFilePathForN(
+        uri: Uri,
+        context: Context
+    ): String? {
+        try {
+            val returnCursor: Cursor? =
+                context.contentResolver.query(uri, null, null, null, null)
+            if(returnCursor==null) return  null
+            val nameIndex: Int = returnCursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+            returnCursor.moveToFirst()
+            val name: String = returnCursor.getString(nameIndex)
+            val file = File(context.filesDir, name)
+            val inputStream: InputStream? = context.contentResolver.openInputStream(uri)
+            val outputStream = FileOutputStream(file)
+            var read = 0
+            val maxBufferSize = 1 * 1024 * 1024
+            if(inputStream==null) return  null
+            val bytesAvailable: Int = inputStream.available()
+            val bufferSize = Math.min(bytesAvailable, maxBufferSize)
+            val buffers = ByteArray(bufferSize)
+            while (inputStream.read(buffers).also({ read = it }) != -1) {
+                outputStream.write(buffers, 0, read)
+            }
+            returnCursor.close()
+            inputStream.close()
+            outputStream.close()
+            return file.getPath()
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+        return null
     }
 }

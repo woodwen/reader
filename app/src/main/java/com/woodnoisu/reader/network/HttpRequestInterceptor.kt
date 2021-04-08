@@ -1,6 +1,6 @@
 package com.woodnoisu.reader.network
 
-import com.woodnoisu.reader.utils.Constant.UserAgent
+import com.woodnoisu.reader.constant.Constant.UserAgent
 import com.woodnoisu.reader.utils.LogUtil
 import okhttp3.Interceptor
 import okhttp3.Response

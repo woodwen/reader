@@ -1,16 +1,10 @@
 package com.woodnoisu.reader.ui.widget.page
 
 import android.content.Context
-import com.woodnoisu.reader.utils.Constant
 import com.woodnoisu.reader.model.BookBean
 import com.woodnoisu.reader.model.ChapterBean
 import com.woodnoisu.reader.utils.*
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import java.io.*
-import java.util.regex.Matcher
-import java.util.regex.Pattern
 import kotlin.jvm.Throws
 
 /**

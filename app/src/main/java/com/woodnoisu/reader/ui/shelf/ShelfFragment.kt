@@ -16,7 +16,7 @@ import com.woodnoisu.reader.R
 import com.woodnoisu.reader.base.BaseFragment
 import com.woodnoisu.reader.model.BookBean
 import com.woodnoisu.reader.ui.novelRead.NovelReadActivity
-import com.woodnoisu.reader.utils.HtFileUtils
+import com.woodnoisu.reader.utils.FileUtil
 import com.woodnoisu.reader.utils.showToast
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.android.synthetic.main.fragment_shelf.*
@@ -65,9 +65,9 @@ class ShelfFragment: BaseFragment() {
             val uri = it
             if (context != null && uri != null) {
                 val bookModel = BookBean()
-                val name = HtFileUtils.uriToName(uri, activity as Context)
+                val name = FileUtil.uriToName(uri, activity as Context)
                 //需要加入修改
-                val path = HtFileUtils.getFilePathForN(uri, activity as Context)
+                val path = FileUtil.getFilePathForN(uri, activity as Context)
                 //val path = uri.path?.split("raw:")?.get(1)
                 bookModel.name = name
                 bookModel.bookFilePath = path!!
