@@ -1,5 +1,4 @@
 <resources>
-
     <!-- Base application theme. -->
     <style name="AppTheme" parent="Theme.Design.Light.NoActionBar">
         <!-- Customize your theme here. -->
@@ -8,60 +7,11 @@
         <item name="colorAccent">@color/colorAccent</item>
     </style>
 
-    <style name="my_fancy_style">
-        <item name="android:layout_width">match_parent</item>
-        <item name="android:layout_height">300dp</item>
-        <item name="android:background">@color/white</item>
-        <item name="android:layout_gravity">center</item>
-        <item name="android:translationZ">1dp</item>
-        <item name="android:layout_marginRight">12dp</item>
-        <item name="android:layout_marginLeft">12dp</item>
-        <item name="android:gravity">center</item>
-        <item name="android:padding">10dp</item>
-    </style>
-
-
-<!--    <style name="Launcher" parent="AppTheme">-->
-<!--        <item name="android:windowBackground">@mipmap/2launch_bg</item>-->
-<!--    </style>-->
-
     <style name="startTheme" parent="AppTheme">
         <item name="android:background">@color/trans</item>
         <item name="android:windowDisablePreview">true</item>
     </style>
 
-    <style name="HwTxtFullScreen" parent="Theme.AppCompat.NoActionBar">
-        <item name="android:windowFullscreen">true</item>
-        <item name="android:windowNoTitle">true</item>
-        <item name="windowActionBar">false</item>
-    </style>
-    <style name="HwTxtChapterMenuAnimation"  parent="android:Animation">
-        <item name="android:windowEnterAnimation">@anim/abc_popup_enter</item>
-        <item name="android:windowExitAnimation">@anim/abc_popup_exit</item>
-    </style>
-
-
-
-    <!--标题颜色-->
-    <attr name="titleColor" format="reference"/>
-    <!--背景色-->
-    <attr name="appBg" format="reference"/>
-    <!--页面中的小标题-->
-    <attr name="smallColor" format="reference"/>
-
-
-
-
-    <style name="dialog" parent="@android:style/Theme.Dialog">
-        <item name="android:windowFrame">@null</item>
-        <item name="android:windowIsFloating">true</item>
-        <item name="android:windowIsTranslucent">true</item>
-        <item name="android:windowNoTitle">true</item>
-        <item name="android:background">@android:color/transparent</item>
-        <item name="android:windowBackground">@android:color/transparent</item>
-        <item name="android:backgroundDimEnabled">true</item>
-        <item name="android:backgroundDimAmount">0.6</item>
-    </style>
     <style name="anim_slide_left_in_right_out" parent="android:Animation.Dialog">
         <item name="android:windowEnterAnimation">@anim/slide_left_in</item>
         <item name="android:windowExitAnimation">@anim/slide_right_out</item>
@@ -85,11 +35,9 @@
         <item name="android:windowAnimationStyle">@style/anim_slide_left_in_right_out</item>
     </style>
 
-
     <style name="ReadSettingDialog" parent="CommonDialog">
         <item name="android:windowAnimationStyle">@style/anim_slide_bottom_in_out</item>
     </style>
-
 
     <style name="ActionButton.Overflow.Menu" parent="android:style/Widget.Holo.Light.ActionButton.Overflow">
         <item name="android:src">@drawable/select_more</item>
