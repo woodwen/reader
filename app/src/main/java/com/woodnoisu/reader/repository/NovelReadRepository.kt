@@ -1,5 +1,6 @@
 package com.woodnoisu.reader.repository
 
+import android.util.Log
 import androidx.annotation.WorkerThread
 import com.woodnoisu.reader.constant.Constant
 import com.woodnoisu.reader.model.*
@@ -123,14 +124,17 @@ class NovelReadRepository @Inject constructor(
                     )
                 )
             } else {
-                // 本地书籍的章节列表解析
-                val chaptersList = loadChapters(bookFilePath)
-                emit(
-                    ResponseChapter(
-                        chaptersList,
-                        cacheContents
+                Log.i("测试", "当前章节:"+start.toString())
+                if(start==0){
+                    // 本地书籍的章节列表解析
+                    val chaptersList = loadChapters(bookFilePath)
+                    emit(
+                        ResponseChapter(
+                            chaptersList,
+                            cacheContents
+                        )
                     )
-                )
+                }
             }
             onSuccess("获取章节列表成功")
         } catch (e: Exception) {
