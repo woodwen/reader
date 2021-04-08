@@ -1,15 +1,13 @@
 package com.woodnoisu.reader.repository
 
 import androidx.annotation.WorkerThread
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
+import com.woodnoisu.reader.constant.Constant
 import com.woodnoisu.reader.model.*
 import com.woodnoisu.reader.network.HtmlClient
 import com.woodnoisu.reader.persistence.BookDao
 import com.woodnoisu.reader.persistence.BookSignDao
 import com.woodnoisu.reader.persistence.ChapterDao
 import com.woodnoisu.reader.persistence.ReadRecordDao
-import com.woodnoisu.reader.ui.widget.page.LocalPageLoader
 import com.woodnoisu.reader.utils.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.flow
@@ -288,10 +286,10 @@ class NovelReadRepository @Inject constructor(
         //寻找匹配文章标题的正则表达式，判断是否存在章节名
         var hasChapter: Boolean = false
         //首先获取128k的数据
-        val buffer0 = ByteArray(HtFileUtils.BUFFER_SIZE / 4)
+        val buffer0 = ByteArray(Constant.BUFFER_SIZE / 4)
         val length0 = bookStream.read(buffer0, 0, buffer0.size)
         //进行章节匹配
-        for (str in HtFileUtils.CHAPTER_PATTERNS) {
+        for (str in Constant.CHAPTER_PATTERNS) {
             val pattern =
                 Pattern.compile(str, Pattern.MULTILINE)
             val matcher =
@@ -311,7 +309,7 @@ class NovelReadRepository @Inject constructor(
         }
 
         //加载章节
-        val buffer = ByteArray(HtFileUtils.BUFFER_SIZE)
+        val buffer = ByteArray(Constant.BUFFER_SIZE)
         //获取到的块起始点，在文件中的位置
         var curOffset: Long = 0
         //block的个数
@@ -427,11 +425,11 @@ class NovelReadRepository @Inject constructor(
                 while (strLength > 0) {
                     ++chapterPos
                     //是否长度超过一章
-                    if (strLength > HtFileUtils.MAX_LENGTH_WITH_NO_CHAPTER) {
+                    if (strLength > Constant.MAX_LENGTH_WITH_NO_CHAPTER) {
                         //在buffer中一章的终止点
                         var end = length
                         //寻找换行符作为终止点
-                        for (i in chapterOffset + HtFileUtils.MAX_LENGTH_WITH_NO_CHAPTER until length) {
+                        for (i in chapterOffset + Constant.MAX_LENGTH_WITH_NO_CHAPTER until length) {
                             if (buffer[i] == FileUtil.Charset.BLANK) {
                                 end = i
                                 break
@@ -502,7 +500,7 @@ class NovelReadRepository @Inject constructor(
     @WorkerThread
     private fun saveChapterInfo(folderName: String, fileName: String, content: String) {
         val filePath = (Constant.BOOK_CACHE_PATH + folderName
-                + File.separator + fileName + FileUtil.SUFFIX_NB)
+                + File.separator + fileName + Constant.SUFFIX_NB)
         if (File(filePath).exists()) {
             return
         }

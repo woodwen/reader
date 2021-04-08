@@ -22,8 +22,8 @@ import androidx.core.view.isVisible
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.fragment.app.FragmentActivity
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.woodnoisu.reader.utils.Constant
-import com.woodnoisu.reader.utils.Constant.RESULT_IS_COLLECTED
+import com.woodnoisu.reader.constant.Constant
+import com.woodnoisu.reader.constant.Constant.RESULT_IS_COLLECTED
 import com.woodnoisu.reader.R
 import com.woodnoisu.reader.base.BaseActivity
 import com.woodnoisu.reader.ui.widget.page.ReadSettingDialog

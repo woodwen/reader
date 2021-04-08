@@ -1,4 +1,4 @@
-package com.woodnoisu.reader.utils
+package com.woodnoisu.reader.ui.widget.page.utils
 
 import android.annotation.SuppressLint
 

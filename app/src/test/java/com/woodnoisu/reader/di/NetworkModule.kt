@@ -1,7 +1,7 @@
 package com.woodnoisu.reader.di
 
 import com.woodnoisu.ktReader.network.*
-import com.woodnoisu.reader.utils.Constant
+import com.woodnoisu.reader.constant.Constant
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn

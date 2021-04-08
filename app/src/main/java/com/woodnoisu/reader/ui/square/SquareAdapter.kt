@@ -1,16 +1,39 @@
 package com.woodnoisu.reader.ui.square
 
 import android.content.Context
-import android.graphics.drawable.Drawable
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import coil.api.load
 import com.woodnoisu.reader.R
 import com.woodnoisu.reader.model.BookBean
+
+abstract class RVOScrollListener constructor(var layoutManager: LinearLayoutManager) : RecyclerView.OnScrollListener() {
+
+    override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
+        super.onScrollStateChanged(recyclerView, newState)
+        val visibleItemCount: Int = layoutManager.childCount
+        val totalItemCount: Int = layoutManager.itemCount
+        val firstVisibleItemPosition: Int = layoutManager.findFirstVisibleItemPosition()
+
+        if (newState == RecyclerView.SCROLL_STATE_IDLE && !isLoading() && !isLastPage()
+            && (visibleItemCount + firstVisibleItemPosition) >= totalItemCount
+            && firstVisibleItemPosition >= 0) {
+            loadMoreItems()
+        }
+    }
+
+    abstract fun loadMoreItems()
+
+    abstract fun totalPageCount(): Int
+
+    abstract fun isLastPage(): Boolean
+    abstract fun isLoading(): Boolean
+}
 
 /**
  * 书籍列表适配器

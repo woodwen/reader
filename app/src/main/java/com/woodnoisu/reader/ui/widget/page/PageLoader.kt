@@ -3,10 +3,10 @@ package com.woodnoisu.reader.ui.widget.page
 import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.*
-import android.graphics.drawable.Drawable
 import android.text.TextPaint
 import androidx.core.content.ContextCompat
 import com.woodnoisu.reader.R
+import com.woodnoisu.reader.constant.Constant
 import com.woodnoisu.reader.model.BookBean
 import com.woodnoisu.reader.model.ChapterBean
 import com.woodnoisu.reader.model.ReadRecordBean
@@ -14,6 +14,7 @@ import com.woodnoisu.reader.ui.widget.page.event.OnPageChangeListener
 import com.woodnoisu.reader.ui.widget.page.model.PageMode
 import com.woodnoisu.reader.ui.widget.page.model.PageStyle
 import com.woodnoisu.reader.ui.widget.page.model.TxtPage
+import com.woodnoisu.reader.ui.widget.page.utils.DateUtil
 import com.woodnoisu.reader.utils.*
 import kotlinx.coroutines.*
 import java.io.BufferedReader
