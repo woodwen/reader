@@ -14,24 +14,20 @@ import androidx.lifecycle.Observer
 import androidx.recyclerview.widget.GridLayoutManager
 import com.woodnoisu.reader.R
 import com.woodnoisu.reader.base.BaseFragment
+import com.woodnoisu.reader.databinding.FragmentShelfBinding
 import com.woodnoisu.reader.model.BookBean
 import com.woodnoisu.reader.ui.novelRead.NovelReadActivity
 import com.woodnoisu.reader.utils.FileUtil
 import com.woodnoisu.reader.utils.showToast
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.android.synthetic.main.fragment_shelf.*
-import kotlinx.android.synthetic.main.fragment_shelf.refresh_layout
-import javax.inject.Inject
 
 @AndroidEntryPoint
 class ShelfFragment: BaseFragment() {
-    @Inject
-    lateinit var viewModelFactory: ShelfViewModel.AssistedFactory
+    private var _binding: FragmentShelfBinding? = null
+    private val binding get() = _binding!!
 
     @VisibleForTesting
-    val viewModel: ShelfViewModel by viewModels {
-        ShelfViewModel.provideFactory(viewModelFactory)
-    }
+    val viewModel: ShelfViewModel by viewModels()
 
     // 书架适配
     private lateinit var adapter: ShelfAdapter
@@ -45,15 +41,16 @@ class ShelfFragment: BaseFragment() {
      * 初始化界面
      */
     override fun initView(){
+        _binding = FragmentShelfBinding.bind(requireView())
         // 初始化刷新颜色
-        refresh_layout.setColorSchemeResources(R.color.colorAccent)
+        binding.refreshLayout.setColorSchemeResources(R.color.colorAccent)
 
         // 初始化书架适配器
         adapter = ShelfAdapter()
 
         // 初始化管理器
-        rv_shelf.layoutManager = GridLayoutManager(activity, 3)
-        rv_shelf.adapter = adapter
+        binding.rvShelf.layoutManager = GridLayoutManager(activity, 3)
+        binding.rvShelf.adapter = adapter
     }
 
     /**
@@ -97,13 +94,13 @@ class ShelfFragment: BaseFragment() {
         }
 
         // 设置刷新事件
-        refresh_layout.setOnRefreshListener {
+        binding.refreshLayout.setOnRefreshListener {
             // 刷新数据
             viewModel.fetchBookList("")
         }
 
         // 设置搜索框内容变更事件
-        et_search.addTextChangedListener(object : TextWatcher {
+        binding.etSearch.addTextChangedListener(object : TextWatcher {
             override fun afterTextChanged(s: Editable?) {
                 viewModel.fetchBookList(s.toString().trim())
             }
@@ -112,7 +109,7 @@ class ShelfFragment: BaseFragment() {
         })
 
         //点击软键盘外部，收起软键盘
-        et_search.setOnFocusChangeListener{ view, hasFocus ->
+        binding.etSearch.setOnFocusChangeListener{ view, hasFocus ->
             if (!hasFocus) {
                 val manager =
                     context?.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
@@ -124,9 +121,9 @@ class ShelfFragment: BaseFragment() {
         }
 
         // 更多点击事件
-        iv_title_more.setOnClickListener { v ->
+        binding.ivTitleMore.setOnClickListener { v ->
             // 声明弹出框
-            val popupWindow = PopupMenu(activity, iv_title_more)
+            val popupWindow = PopupMenu(activity, binding.ivTitleMore)
             // 初始化按钮
             popupWindow.inflate(R.menu.shelf_pop_menu)
             // 设置按钮事件
@@ -135,7 +132,7 @@ class ShelfFragment: BaseFragment() {
                     //管理书架
                     R.id.shelf_manage -> {
                         //显示完成按钮
-                        tv_complete.visibility = View.VISIBLE
+                        binding.tvComplete.visibility = View.VISIBLE
                         //设置管理模式
                         adapter.edit = true
                     }
@@ -150,9 +147,9 @@ class ShelfFragment: BaseFragment() {
         }
 
         // 完成点击事件
-        tv_complete.setOnClickListener {
+        binding.tvComplete.setOnClickListener {
             //隐藏完成按钮
-            tv_complete.isVisible = false
+            binding.tvComplete.isVisible = false
             //关闭管理模式
             adapter.edit = false
         }
@@ -164,13 +161,13 @@ class ShelfFragment: BaseFragment() {
 
         //是否显示加载框
         viewModel.isLoading.observe(this, Observer<Boolean> {
-            refresh_layout.isRefreshing = it
+            binding.refreshLayout.isRefreshing = it
         })
 
         //全部刷新
         viewModel.bookList.observe(viewLifecycleOwner, Observer<List<BookBean>> {
             adapter.refreshItems(it)
-            refresh_layout.isRefreshing = false
+            binding.refreshLayout.isRefreshing = false
         })
 
         //新增书籍
@@ -190,5 +187,10 @@ class ShelfFragment: BaseFragment() {
     override fun initData(){
         //填充默认数据
         viewModel.fetchBookList("")
+    }
+
+    override fun onDestroyView() {
+        _binding = null
+        super.onDestroyView()
     }
 }

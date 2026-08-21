@@ -42,6 +42,9 @@ class BQGParse(htmlService: HtmlService):
         var currentPage = 0
         var totalPage = 0
         val bookModels = ArrayList<BookBean>()
+        if (html.isNullOrBlank()) {
+            return ResponseSearchPageByType(typeName, currentPage, totalPage, bookModels)
+        }
         var document: Document? = null
         try {
             document = Jsoup.parse(html)
@@ -98,6 +101,9 @@ class BQGParse(htmlService: HtmlService):
         val url = "${baseUrl}/${String.format(bookShopInfo.bookSearchByKeyPath,keyword)}"
         val html = htmlService.getHtml(url,mapOf())
         val bookModels = ArrayList<BookBean>()
+        if (html.isNullOrBlank()) {
+            return ResponseSearchPageByKeyword(keyword, 0, 0, bookModels)
+        }
         var document: Document? = null
         try {
             document = Jsoup.parse(html)

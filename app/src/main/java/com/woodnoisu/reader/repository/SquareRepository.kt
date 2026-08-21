@@ -5,6 +5,7 @@ import androidx.annotation.WorkerThread
 import com.woodnoisu.reader.model.*
 import com.woodnoisu.reader.network.HtmlClient
 import com.woodnoisu.reader.persistence.BookDao
+import com.woodnoisu.reader.utils.LogUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
@@ -17,6 +18,14 @@ class SquareRepository @Inject constructor(
     private val htmlClient: HtmlClient,
     private val bookDao: BookDao
 ):Repository {
+    companion object {
+        private const val TAG = "SquareRepository"
+        private const val ERROR_SHOP_LOAD = "书城暂时连接不上，请检查网络后下拉重试"
+        private const val ERROR_EMPTY_RESULT = "没有找到相关书籍，换个分类或关键词试试"
+        private const val ERROR_BOOK_INFO = "书籍详情暂时加载失败，请稍后重试"
+        private const val ERROR_ADD_BOOK = "加入书架失败，请稍后重试"
+    }
+
     /**
      * 按类型搜索
      */
@@ -36,14 +45,17 @@ class SquareRepository @Inject constructor(
                 if (!responseSearch.bookBeans.isNullOrEmpty()) {
                     emit(responseSearch)
                     onSuccess("获取成功")
+                } else if (responseSearch.currentPage == 0 && responseSearch.totalPage == 0) {
+                    onError(ERROR_SHOP_LOAD)
                 } else {
-                    onError("获取网络请求失败")
+                    onError(ERROR_EMPTY_RESULT)
                 }
             } else {
-                onError("书籍类型或者书籍类型链接为空")
+                onError("书城分类暂时不可用，请切换分类后重试")
             }
         } catch (e: Exception) {
-            onError(e.toString())
+            LogUtil.e(TAG, "按类型搜索失败", e)
+            onError(ERROR_SHOP_LOAD)
         }
     }.flowOn(Dispatchers.IO)
 
@@ -68,11 +80,14 @@ class SquareRepository @Inject constructor(
             if (!responseSearch.bookBeans.isNullOrEmpty()) {
                 emit(responseSearch)
                 onSuccess("获取成功")
+            } else if (responseSearch.currentPage == 0 && responseSearch.totalPage == 0) {
+                onError(ERROR_SHOP_LOAD)
             } else {
-                onError("获取网络请求失败")
+                onError(ERROR_EMPTY_RESULT)
             }
         } catch (e: Exception) {
-            onError(e.toString())
+            LogUtil.e(TAG, "按关键字搜索失败", e)
+            onError(ERROR_SHOP_LOAD)
         }
     }.flowOn(Dispatchers.IO)
 
@@ -106,7 +121,8 @@ class SquareRepository @Inject constructor(
                 onError("添加失败，需要添加的书籍或者书籍链接为空")
             }
         } catch (e: Exception) {
-            onError(e.toString())
+            LogUtil.e(TAG, "加入书架失败", e)
+            onError(ERROR_ADD_BOOK)
         }
     }.flowOn(Dispatchers.IO)
 
@@ -142,14 +158,15 @@ class SquareRepository @Inject constructor(
                         emit(ResponseBookInfo(remoteBook))
                         onSuccess("获取书籍信息成功")
                     } else {
-                        onError("获取书籍信息失败")
+                        onError(ERROR_BOOK_INFO)
                     }
                 }
             } else {
                 onError("获取失败，书籍链接为空")
             }
         } catch (e: Exception) {
-            onError(e.toString())
+            LogUtil.e(TAG, "获取书籍信息失败", e)
+            onError(ERROR_BOOK_INFO)
         }
     }.flowOn(Dispatchers.IO)
 

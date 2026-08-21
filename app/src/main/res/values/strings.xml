@@ -12,6 +12,7 @@
 
     <string name="empty_info"> </string>
     <string name="common_no_data">没有相关数据!</string>
+    <string name="square_load_empty">书城暂时没有内容</string>
     <string name="clear_book">清空书架列表</string>
 
     <!--more-->
@@ -41,7 +42,7 @@
     <string name="net_error">加入书架失败,请检查网络设置</string>
     <string name="add_bookmark">新增书签</string>
     <string name="clear_bookmark">清除</string>
-    <string name="download_loading">%d/%d</string>
+    <string name="download_loading">%1$d/%2$d</string>
     <string name="downloading">正在下载</string>
 
     <!--  翻页  -->

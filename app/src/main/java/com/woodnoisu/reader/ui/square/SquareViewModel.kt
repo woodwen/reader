@@ -7,9 +7,11 @@ import com.woodnoisu.reader.base.BaseViewModel
 import com.woodnoisu.reader.model.*
 import com.woodnoisu.reader.repository.SquareRepository
 import com.woodnoisu.reader.utils.LogUtil
-import dagger.assisted.AssistedInject
+import dagger.hilt.android.lifecycle.HiltViewModel
+import javax.inject.Inject
 
-class SquareViewModel @AssistedInject constructor(
+@HiltViewModel
+class SquareViewModel @Inject constructor(
     private val squareRepository: SquareRepository
 ) : BaseViewModel() {
     private val searchTypeFetching: MutableLiveData<RequestSearchPageByType> = MutableLiveData()
@@ -31,6 +33,8 @@ class SquareViewModel @AssistedInject constructor(
     private val _totalPage: MutableLiveData<Int> = MutableLiveData()
     private val _keyWord: MutableLiveData<String> = MutableLiveData()
     private val _type: MutableLiveData<String> = MutableLiveData()
+    private val _squareMessage: MutableLiveData<String?> = MutableLiveData()
+    val squareMessage: LiveData<String?> get() = _squareMessage
 
     init {
         LogUtil.i("init SquareViewModel")
@@ -44,34 +48,48 @@ class SquareViewModel @AssistedInject constructor(
         //_remoteBookList.value = ArrayList()
 
         // 根据类型搜索
-        searchType = searchTypeFetching.switchMap {
+        searchType = searchTypeFetching.switchMap { request ->
             _isLoading.postValue(true)
+            if (request.page == 1) {
+                _squareMessage.postValue(null)
+            }
             launchOnViewModelScope {
                 squareRepository.fetchSearchType(
-                    request = it,
+                    request = request,
                     onSuccess = {
                         _isLoading.postValue(false)
+                        _squareMessage.postValue(null)
                     },
-                    onError = {
+                    onError = { message ->
                         _isLoading.postValue(false)
-                        _toast.postValue(it)
+                        if (request.page == 1) {
+                            _squareMessage.postValue(message)
+                        }
+                        _toast.postValue(message)
                     }
                 ).asLiveData()
             }
         }
 
         // 根据关键字搜索
-        searchKeyWord = searchKeyWordFetching.switchMap {
+        searchKeyWord = searchKeyWordFetching.switchMap { request ->
             _isLoading.postValue(true)
+            if (request.page == 1) {
+                _squareMessage.postValue(null)
+            }
             launchOnViewModelScope {
                 squareRepository.fetchSearchKeyWord(
-                    request = it,
+                    request = request,
                     onSuccess = {
                         _isLoading.postValue(false)
+                        _squareMessage.postValue(null)
                     },
-                    onError = {
+                    onError = { message ->
                         _isLoading.postValue(false)
-                        _toast.postValue(it)
+                        if (request.page == 1) {
+                            _squareMessage.postValue(message)
+                        }
+                        _toast.postValue(message)
                     }
                 ).asLiveData()
             }
@@ -109,22 +127,6 @@ class SquareViewModel @AssistedInject constructor(
                         _toast.postValue(it)
                     }
                 ).asLiveData()
-            }
-        }
-    }
-
-    @dagger.assisted.AssistedFactory
-    interface AssistedFactory {
-        fun create(): SquareViewModel
-    }
-
-    companion object {
-        fun provideFactory(
-            assistedFactory: AssistedFactory
-        ): ViewModelProvider.Factory = object : ViewModelProvider.Factory {
-            @Suppress("UNCHECKED_CAST")
-            override fun <T : ViewModel?> create(modelClass: Class<T>): T {
-                return assistedFactory.create() as T
             }
         }
     }

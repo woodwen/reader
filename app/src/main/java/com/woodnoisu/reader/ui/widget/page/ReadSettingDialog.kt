@@ -8,18 +8,19 @@ import android.view.View
 import android.view.WindowManager
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.GridLayoutManager
+import com.woodnoisu.reader.databinding.LayoutSettingBinding
 import com.woodnoisu.reader.ui.widget.page.adapter.PageStyleAdapter
 import com.woodnoisu.reader.ui.widget.page.model.PageMode
 import com.woodnoisu.reader.ui.widget.page.model.PageStyle
 import com.woodnoisu.reader.R
 import com.woodnoisu.reader.utils.ScreenUtil
-import kotlinx.android.synthetic.main.layout_setting.*
 
 /**
  * 阅读设置对话框
  */
 class ReadSettingDialog(mActivity: Activity, private var mPageLoader: PageLoader) :
     Dialog(mActivity, R.style.ReadSettingDialog) {
+    private val binding: LayoutSettingBinding
 
     // 页面适配器
     private lateinit var mPageStyleAdapter: PageStyleAdapter
@@ -53,6 +54,7 @@ class ReadSettingDialog(mActivity: Activity, private var mPageLoader: PageLoader
      */
     init {
         setContentView(R.layout.layout_setting)
+        binding = LayoutSettingBinding.bind(findViewById(R.id.ll_setting))
         setUpWindow()
         initData()
         initWidget()
@@ -84,13 +86,13 @@ class ReadSettingDialog(mActivity: Activity, private var mPageLoader: PageLoader
         mPageStyle = mSettingManager.pageStyle
         convertType = mSettingManager.convertType
         if (convertType == 0) {
-            tv_simple.isSelected = true
-            tv_trans.isSelected = false
+            binding.tvSimple.isSelected = true
+            binding.tvTrans.isSelected = false
         } else {
-            tv_simple.isSelected = false
-            tv_trans.isSelected = true
+            binding.tvSimple.isSelected = false
+            binding.tvTrans.isSelected = true
         }
-        tv_size.text = "$mTextSize"
+        binding.tvSize.text = "$mTextSize"
     }
 
     /**
@@ -106,52 +108,52 @@ class ReadSettingDialog(mActivity: Activity, private var mPageLoader: PageLoader
     private fun initClick() {
 
         //字体大小调节
-        read_setting_tv_font_minus.setOnClickListener {
+        binding.readSettingTvFontMinus.setOnClickListener {
             val fontSize = mSettingManager.textSize - 1
             if (fontSize < 0) {
                 return@setOnClickListener
             }
             mPageLoader.setTextSize(fontSize)
-            tv_size.text = "$fontSize"
+            binding.tvSize.text = "$fontSize"
         }
 
-        read_setting_tv_font_plus.setOnClickListener {
+        binding.readSettingTvFontPlus.setOnClickListener {
             val fontSize = mSettingManager.textSize + 1
             mPageLoader.setTextSize(fontSize)
-            tv_size.text = "$fontSize"
+            binding.tvSize.text = "$fontSize"
         }
 
-        tv_font_default.setOnClickListener {
+        binding.tvFontDefault.setOnClickListener {
             val fontSize = ScreenUtil.spToPx(16)
             mSettingManager.textSize = fontSize
             mPageLoader.setTextSize(fontSize)
-            tv_size.text = "$fontSize"
+            binding.tvSize.text = "$fontSize"
         }
 
-        tv_simple.setOnClickListener(View.OnClickListener {
+        binding.tvSimple.setOnClickListener(View.OnClickListener {
             if (convertType == 0) {
                 return@OnClickListener
             }
-            tv_simple.isSelected = true
-            tv_trans.isSelected = false
+            binding.tvSimple.isSelected = true
+            binding.tvTrans.isSelected = false
             mSettingManager.convertType = 0
             convertType = 0
             mPageLoader.setTextSize(mSettingManager.textSize)
         })
 
-        tv_trans.setOnClickListener(View.OnClickListener {
+        binding.tvTrans.setOnClickListener(View.OnClickListener {
             if (convertType == 1) {
                 return@OnClickListener
             }
-            tv_simple.isSelected = false
-            tv_trans.isSelected = true
+            binding.tvSimple.isSelected = false
+            binding.tvTrans.isSelected = true
             mSettingManager.convertType = 1
             convertType = 1
             mPageLoader.setTextSize(mSettingManager.textSize)
         })
 
         //Page Mode 切换
-        read_setting_rg_page_mode.setOnCheckedChangeListener { group, checkedId ->
+        binding.readSettingRgPageMode.setOnCheckedChangeListener { group, checkedId ->
             val pageMode: PageMode = when (checkedId) {
                 R.id.read_setting_rb_simulation -> PageMode.SIMULATION
                 R.id.read_setting_rb_cover -> PageMode.COVER
@@ -169,10 +171,10 @@ class ReadSettingDialog(mActivity: Activity, private var mPageLoader: PageLoader
      */
     private fun initPageMode() {
         when (mPageMode) {
-            PageMode.SIMULATION -> read_setting_rb_simulation.isChecked = true
-            PageMode.COVER -> read_setting_rb_cover.isChecked = true
-            PageMode.NONE -> read_setting_rb_none.isChecked = true
-            PageMode. SCROLL -> read_setting_rb_scroll.isChecked = true
+            PageMode.SIMULATION -> binding.readSettingRbSimulation.isChecked = true
+            PageMode.COVER -> binding.readSettingRbCover.isChecked = true
+            PageMode.NONE -> binding.readSettingRbNone.isChecked = true
+            PageMode. SCROLL -> binding.readSettingRbScroll.isChecked = true
             else -> {
 
             }
@@ -194,8 +196,8 @@ class ReadSettingDialog(mActivity: Activity, private var mPageLoader: PageLoader
             PageStyleAdapter(
                 listOf(*drawables) as List<Drawable>, mPageLoader
             )
-        read_setting_rv_bg.layoutManager = GridLayoutManager(context, 4)
-        read_setting_rv_bg.adapter = mPageStyleAdapter
+        binding.readSettingRvBg.layoutManager = GridLayoutManager(context, 4)
+        binding.readSettingRvBg.adapter = mPageStyleAdapter
 
         mPageStyleAdapter.setPageStyleChecked(mPageStyle!!)
 

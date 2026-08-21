@@ -4,6 +4,7 @@ import android.Manifest
 import android.app.Activity
 import android.app.ActivityOptions
 import android.content.Intent
+import android.view.ViewGroup
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
@@ -13,11 +14,13 @@ import androidx.lifecycle.Observer
 import androidx.viewpager2.widget.ViewPager2
 import com.woodnoisu.reader.R
 import com.woodnoisu.reader.base.BaseActivity
+import com.woodnoisu.reader.databinding.ActivityMainBinding
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.android.synthetic.main.activity_main.*
 
 @AndroidEntryPoint
 class MainActivity : BaseActivity() {
+  private lateinit var binding: ActivityMainBinding
+
   @VisibleForTesting
   val viewModel: MainViewModel by viewModels()
 
@@ -32,7 +35,8 @@ class MainActivity : BaseActivity() {
    * 初始化界面
    */
   override fun initView(){
-    viewPager.adapter =
+    binding = ActivityMainBinding.bind(findViewById<ViewGroup>(android.R.id.content).getChildAt(0))
+    binding.viewPager.adapter =
         MainAdapter(this@MainActivity)
     //申请权限
     requestPermission()
@@ -43,23 +47,23 @@ class MainActivity : BaseActivity() {
    */
   override fun initListener() {
     // 设置切换标签事件
-    bottom_navigation.setOnNavigationItemSelectedListener {
+    binding.bottomNavigation.setOnNavigationItemSelectedListener {
       when (it.itemId) {
         R.id.navigation_square -> {
-          if (viewPager.currentItem != 0) {
-            viewPager.currentItem = 0
+          if (binding.viewPager.currentItem != 0) {
+            binding.viewPager.currentItem = 0
           }
           return@setOnNavigationItemSelectedListener true
         }
         R.id.navigation_shelf -> {
-          if (viewPager.currentItem != 1) {
-            viewPager.currentItem = 1
+          if (binding.viewPager.currentItem != 1) {
+            binding.viewPager.currentItem = 1
           }
           return@setOnNavigationItemSelectedListener true
         }
         R.id.navigation_me -> {
-          if (viewPager.currentItem != 2) {
-            viewPager.currentItem = 2
+          if (binding.viewPager.currentItem != 2) {
+            binding.viewPager.currentItem = 2
           }
           return@setOnNavigationItemSelectedListener true
         }
@@ -68,9 +72,9 @@ class MainActivity : BaseActivity() {
     }
 
     //中间区域注册事件
-    viewPager.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
+    binding.viewPager.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
       override fun onPageSelected(position: Int) {
-        val menuItem = bottom_navigation.menu.getItem(position)
+        val menuItem = binding.bottomNavigation.menu.getItem(position)
         if (!menuItem.isChecked) {
           menuItem.isChecked = true
         }

@@ -6,10 +6,12 @@ import com.woodnoisu.reader.base.BaseViewModel
 import com.woodnoisu.reader.model.BookBean
 import com.woodnoisu.reader.repository.ShelfRepository
 import com.woodnoisu.reader.utils.LogUtil
-import dagger.assisted.AssistedInject
+import dagger.hilt.android.lifecycle.HiltViewModel
+import javax.inject.Inject
 
 
-class ShelfViewModel @AssistedInject constructor(
+@HiltViewModel
+class ShelfViewModel @Inject constructor(
     shelfRepository: ShelfRepository
 ) : BaseViewModel() {
     private val bookListFetching: MutableLiveData<String> = MutableLiveData()
@@ -73,22 +75,6 @@ class ShelfViewModel @AssistedInject constructor(
                         _toast.postValue(it)
                     }
                 ).asLiveData()
-            }
-        }
-    }
-
-    @dagger.assisted.AssistedFactory
-    interface AssistedFactory {
-        fun create(): ShelfViewModel
-    }
-
-    companion object {
-        fun provideFactory(
-            assistedFactory: AssistedFactory
-        ): ViewModelProvider.Factory = object : ViewModelProvider.Factory {
-            @Suppress("UNCHECKED_CAST")
-            override fun <T : ViewModel?> create(modelClass: Class<T>): T {
-                return assistedFactory.create() as T
             }
         }
     }

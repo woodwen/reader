@@ -45,6 +45,9 @@ class QWYDParse(htmlService: HtmlService):
         var currentPage = 0
         var totalPage = 0
         val bookModels = ArrayList<BookBean>()
+        if (html.isNullOrBlank()) {
+            return ResponseSearchPageByKeyword(keyword, currentPage, totalPage, bookModels)
+        }
         var document: Document? = null
         try {
             document = Jsoup.parse(html)
@@ -100,6 +103,9 @@ class QWYDParse(htmlService: HtmlService):
         var currentPage = 0
         var totalPage = 0
         val bookModels = ArrayList<BookBean>()
+        if (html.isNullOrBlank()) {
+            return ResponseSearchPageByType(typeName, currentPage, totalPage, bookModels)
+        }
         var document: Document? = null
         try {
             document = Jsoup.parse(html)

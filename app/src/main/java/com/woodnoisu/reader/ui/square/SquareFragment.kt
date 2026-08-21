@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.drawable.Drawable
 import android.text.InputType
+import android.view.View
 import android.widget.Toast
 import androidx.annotation.VisibleForTesting
 import androidx.fragment.app.viewModels
@@ -15,29 +16,24 @@ import com.afollestad.materialdialogs.lifecycle.lifecycleOwner
 import com.afollestad.materialdialogs.list.listItems
 import com.woodnoisu.reader.R
 import com.woodnoisu.reader.base.BaseFragment
+import com.woodnoisu.reader.databinding.FragmentSquareBinding
 import com.woodnoisu.reader.model.*
 import com.woodnoisu.reader.ui.novelRead.NovelReadActivity
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.android.synthetic.main.fragment_square.*
-import kotlinx.android.synthetic.main.fragment_square.refresh_layout
-import kotlinx.android.synthetic.main.search_title.*
-import javax.inject.Inject
 
 /**
  * 广场页
  */
 @AndroidEntryPoint
 class SquareFragment: BaseFragment() {
+    private var _binding: FragmentSquareBinding? = null
+    private val binding get() = _binding!!
+
     //书籍列表适配器
     private lateinit var squareAdapter: SquareAdapter
 
-    @Inject
-    lateinit var viewModelFactory: SquareViewModel.AssistedFactory
-
     @VisibleForTesting
-    val viewModel: SquareViewModel by viewModels {
-        SquareViewModel.provideFactory(viewModelFactory,)
-    }
+    val viewModel: SquareViewModel by viewModels()
 
     /**
      * 获取界面id
@@ -48,14 +44,16 @@ class SquareFragment: BaseFragment() {
      * 初始化界面
      */
     override fun initView() {
+        _binding = FragmentSquareBinding.bind(requireView())
         // 刷新框架主题色
-        refresh_layout.setColorSchemeResources(R.color.colorAccent)
+        binding.refreshLayout.setColorSchemeResources(R.color.colorAccent)
+        showSquareMessage(null)
 
         //初始化列表适配器
         squareAdapter = SquareAdapter()
 
         // 初始化主显示界面
-        rv_types.apply {
+        binding.rvTypes.apply {
             adapter = squareAdapter
             layoutManager = LinearLayoutManager(activity)
         }
@@ -67,7 +65,7 @@ class SquareFragment: BaseFragment() {
     @SuppressLint("WrongConstant")
     override fun initListener() {
         // 小说书城弹出框事件
-        tv_search_title.setOnClickListener {
+        binding.searchTitle.tvSearchTitle.setOnClickListener {
             MaterialDialog(requireContext()).show {
                 title(text = "书城分类")
                 listItems(items = viewModel.getParses()) { _, _, text ->
@@ -80,7 +78,7 @@ class SquareFragment: BaseFragment() {
         }
 
         // 小说分类弹出框事件
-        tv_search_filter.setOnClickListener {
+        binding.searchTitle.tvSearchFilter.setOnClickListener {
             MaterialDialog(requireContext()).show {
                 title(text = "小说分类")
                 listItems(items = viewModel.getTypes()) { _, _, text ->
@@ -91,7 +89,7 @@ class SquareFragment: BaseFragment() {
         }
 
         // 设置搜索事件
-        tv_search_search.setOnClickListener {
+        binding.searchTitle.tvSearchSearch.setOnClickListener {
             MaterialDialog(requireContext()).show {
                 title(text = "搜索小说")
                 input(
@@ -110,7 +108,7 @@ class SquareFragment: BaseFragment() {
         }
 
         // 刷新事件
-        refresh_layout.setOnRefreshListener {
+        binding.refreshLayout.setOnRefreshListener {
             viewModel.fetchSearch(1)
         }
 
@@ -122,8 +120,8 @@ class SquareFragment: BaseFragment() {
         }
 
         //添加列表滚动事件
-        rv_types.addOnScrollListener(object :
-            RVOScrollListener(rv_types.layoutManager as LinearLayoutManager) {
+        binding.rvTypes.addOnScrollListener(object :
+            RVOScrollListener(binding.rvTypes.layoutManager as LinearLayoutManager) {
             override fun loadMoreItems() {
                 viewModel.fetchSearch()
             }
@@ -148,9 +146,14 @@ class SquareFragment: BaseFragment() {
             }
         })
 
+        //书城空态或错误提示
+        viewModel.squareMessage.observe(viewLifecycleOwner, {
+            showSquareMessage(it)
+        })
+
         //是否显示加载框
         viewModel.isLoading.observe(viewLifecycleOwner, {
-            refresh_layout.isRefreshing = it
+            binding.refreshLayout.isRefreshing = it
         })
 
         //根据类型搜索
@@ -213,6 +216,7 @@ class SquareFragment: BaseFragment() {
      * 填充页面
      */
     private fun fetchPage(currentPage:Int,totalPage:Int,bookList:List<BookBean>) {
+        showSquareMessage(null)
         if (!bookList.isNullOrEmpty()) {
             if (currentPage == 1) {
                 squareAdapter.refreshItems(bookList)
@@ -221,7 +225,7 @@ class SquareFragment: BaseFragment() {
             }
         }
         viewModel.fetchPage(currentPage + 1, totalPage)
-        refresh_layout.isRefreshing = false
+        binding.refreshLayout.isRefreshing = false
     }
 
     /**
@@ -234,13 +238,30 @@ class SquareFragment: BaseFragment() {
         if (keyWord.isBlank()) {
             // 根据类型搜索
             viewModel?.fetchSearchType(typeName, 1)
-            tv_search_title.text = viewModel.getShopName()
-            tv_search_filter.text = typeName
+            binding.searchTitle.tvSearchTitle.text = viewModel.getShopName()
+            binding.searchTitle.tvSearchFilter.text = typeName
         } else {
             //根据关键字搜索
             viewModel.fetchSearchKeyWord(keyWord, 1)
-            tv_search_title.text = viewModel.getShopName()
-            tv_search_filter.text = keyWord
+            binding.searchTitle.tvSearchTitle.text = viewModel.getShopName()
+            binding.searchTitle.tvSearchFilter.text = keyWord
         }
+    }
+
+    private fun showSquareMessage(message: String?) {
+        if (message.isNullOrBlank()) {
+            binding.tvSquareMessage.text = ""
+            binding.tvSquareMessage.visibility = View.GONE
+            binding.rvTypes.visibility = View.VISIBLE
+        } else {
+            binding.tvSquareMessage.text = message
+            binding.tvSquareMessage.visibility = View.VISIBLE
+            binding.rvTypes.visibility = View.GONE
+        }
+    }
+
+    override fun onDestroyView() {
+        _binding = null
+        super.onDestroyView()
     }
 }

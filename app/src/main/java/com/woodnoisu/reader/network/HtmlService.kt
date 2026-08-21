@@ -2,7 +2,6 @@ package com.woodnoisu.reader.network
 
 import com.woodnoisu.reader.constant.Constant.UserAgent
 import com.woodnoisu.reader.utils.LogUtil
-import com.woodnoisu.reader.utils.showToast
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.FormBody
@@ -20,7 +19,6 @@ class HtmlService {
             return withContext(Dispatchers.IO) { get(url,head) }
         } catch (e: java.io.IOException) {
             LogUtil.e(e.toString())
-            showToast(e.toString())
         }
         return null
     }
@@ -33,7 +31,6 @@ class HtmlService {
             return withContext(Dispatchers.IO) { post(url,head,body) }
         } catch (e: java.io.IOException) {
             LogUtil.e(e.toString())
-            showToast(e.toString())
         }
         return null
     }

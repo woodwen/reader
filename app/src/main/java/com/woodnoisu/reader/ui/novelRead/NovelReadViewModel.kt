@@ -1,7 +1,6 @@
 package com.woodnoisu.reader.ui.novelRead
 
 import androidx.annotation.MainThread
-import androidx.hilt.Assisted
 import androidx.lifecycle.*
 import com.woodnoisu.reader.base.BaseViewModel
 import com.woodnoisu.reader.model.*
@@ -16,7 +15,7 @@ import javax.inject.Inject
 @HiltViewModel
 class NovelReadViewModel @Inject constructor(
     novelReadRepository: NovelReadRepository,
-    @Assisted private val savedStateHandle: SavedStateHandle
+    private val savedStateHandle: SavedStateHandle
 ) : BaseViewModel() {
     // 当前书籍
     private var _collBook:MutableLiveData<BookBean> = MutableLiveData()

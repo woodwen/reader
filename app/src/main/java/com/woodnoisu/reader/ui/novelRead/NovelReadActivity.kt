@@ -7,6 +7,7 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.os.Build
 import android.view.KeyEvent
+import android.view.ViewGroup
 import android.view.WindowManager
 import android.view.animation.Animation
 import android.view.animation.AnimationUtils
@@ -26,6 +27,10 @@ import com.woodnoisu.reader.constant.Constant
 import com.woodnoisu.reader.constant.Constant.RESULT_IS_COLLECTED
 import com.woodnoisu.reader.R
 import com.woodnoisu.reader.base.BaseActivity
+import com.woodnoisu.reader.databinding.ActivityReadBinding
+import com.woodnoisu.reader.databinding.LayoutDownloadBinding
+import com.woodnoisu.reader.databinding.LayoutLightBinding
+import com.woodnoisu.reader.databinding.LayoutReadMarkBinding
 import com.woodnoisu.reader.ui.widget.page.ReadSettingDialog
 import com.woodnoisu.reader.ui.widget.page.PageLoader
 import com.woodnoisu.reader.ui.widget.page.ReadSettingManager
@@ -33,10 +38,6 @@ import com.woodnoisu.reader.ui.widget.page.event.OnPageChangeListener
 import com.woodnoisu.reader.ui.widget.page.event.OnTouchListener
 import com.woodnoisu.reader.utils.*
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.android.synthetic.main.activity_read.*
-import kotlinx.android.synthetic.main.layout_download.*
-import kotlinx.android.synthetic.main.layout_light.*
-import kotlinx.android.synthetic.main.layout_read_mark.*
 import java.util.*
 import androidx.lifecycle.Observer
 import com.woodnoisu.reader.model.*
@@ -46,6 +47,11 @@ import com.woodnoisu.reader.model.*
  */
 @AndroidEntryPoint
 class NovelReadActivity : BaseActivity() {
+    private lateinit var binding: ActivityReadBinding
+    private lateinit var downloadBinding: LayoutDownloadBinding
+    private lateinit var lightBinding: LayoutLightBinding
+    private lateinit var markBinding: LayoutReadMarkBinding
+
     // vm
     @VisibleForTesting
     val viewModel: NovelReadViewModel by viewModels()
@@ -105,7 +111,7 @@ class NovelReadActivity : BaseActivity() {
      */
     override fun onBackPressed() {
         super.onBackPressed()
-        if (read_abl_top_menu.isVisible) {
+        if (binding.readAblTopMenu.isVisible) {
             // 非全屏下才收缩，全屏下直接退出
             if (!viewModel.getIsFullScreen()) {
                 toggleMenu(true)
@@ -114,8 +120,8 @@ class NovelReadActivity : BaseActivity() {
         } else if (mSettingDialog.isShowing) {
             mSettingDialog.dismiss()
             return
-        } else if (read_dl_slide.isDrawerOpen(GravityCompat.START)) {
-            read_dl_slide.closeDrawer(GravityCompat.START)
+        } else if (binding.readDlSlide.isDrawerOpen(GravityCompat.START)) {
+            binding.readDlSlide.closeDrawer(GravityCompat.START)
             return
         }
 //        val mCollBook = viewModel.getCollBook()
@@ -175,6 +181,11 @@ class NovelReadActivity : BaseActivity() {
      * 初始化窗口
      */
     override fun initView() {
+        binding = ActivityReadBinding.bind(findViewById<ViewGroup>(android.R.id.content).getChildAt(0))
+        downloadBinding = LayoutDownloadBinding.bind(binding.root.findViewById(R.id.ll_download))
+        lightBinding = LayoutLightBinding.bind(binding.root.findViewById(R.id.ll_light))
+        markBinding = LayoutReadMarkBinding.bind(binding.root.findViewById(R.id.rlReadMark))
+
         // 初始化动画
         mTopInAnim = AnimationUtils.loadAnimation(this, R.anim.slide_top_in)
         mTopOutAnim = AnimationUtils.loadAnimation(this, R.anim.slide_top_out)
@@ -195,7 +206,7 @@ class NovelReadActivity : BaseActivity() {
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
 
         //获取页面加载器
-        mPageLoader = read_pv_page.getPageLoader(viewModel.getCollBook())
+        mPageLoader = binding.readPvPage.getPageLoader(viewModel.getCollBook())
 
         // 阅读设置器
         mSettingDialog = ReadSettingDialog(
@@ -204,15 +215,15 @@ class NovelReadActivity : BaseActivity() {
         )
 
         //禁止滑动展示DrawerLayout
-        read_dl_slide.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED)
+        binding.readDlSlide.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED)
         //侧边打开后，返回键能够起作用
-        read_dl_slide.isFocusableInTouchMode = false
+        binding.readDlSlide.isFocusableInTouchMode = false
         //半透明化StatusBar
         SystemBarUtil.transparentStatusBar(this)
         //隐藏StatusBar
-        read_pv_page.post { SystemBarUtil.hideSystemBar(this,viewModel.getIsFullScreen()) }
-        read_abl_top_menu.setPadding(0, ScreenUtil.getStatusBarHeight(), 0, 0)
-        ll_download.setPadding(0, ScreenUtil.getStatusBarHeight(), 0, ScreenUtil.dpToPx(15))
+        binding.readPvPage.post { SystemBarUtil.hideSystemBar(this,viewModel.getIsFullScreen()) }
+        binding.readAblTopMenu.setPadding(0, ScreenUtil.getStatusBarHeight(), 0, 0)
+        downloadBinding.llDownload.setPadding(0, ScreenUtil.getStatusBarHeight(), 0, ScreenUtil.dpToPx(15))
 
         val lp = window.attributes
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
@@ -234,18 +245,18 @@ class NovelReadActivity : BaseActivity() {
         registerReceiver(mReceiver, intentFilter)
 
         if (!SpUtil.getBooleanValue(Constant.BookGuide, false)) {
-            iv_guide.isVisible = true
+            binding.ivGuide.isVisible = true
             toggleMenu(false)
         }
 
-        tv_book_name.text = viewModel.getCollBook().name
+        binding.tvBookName.text = viewModel.getCollBook().name
         mCategoryAdapter = CatalogueAdapter()
-        rlv_list.adapter = mCategoryAdapter
-        rlv_list.isFastScrollEnabled = true
-        rlv_mark.layoutManager = LinearLayoutManager(this)
+        binding.rlvList.adapter = mCategoryAdapter
+        binding.rlvList.isFastScrollEnabled = true
+        markBinding.rlvMark.layoutManager = LinearLayoutManager(this)
 
         mMarkAdapter = MarkAdapter()
-        rlv_mark.adapter = mMarkAdapter
+        markBinding.rlvMark.adapter = mMarkAdapter
         toggleNightMode()
     }
 
@@ -300,7 +311,7 @@ class NovelReadActivity : BaseActivity() {
         // 获取章节内容之后
         viewModel.chapterContents.observe(this, Observer<ArrayList<ChapterBean>> {
             val pos = mPageLoader.getChapterPos()
-            rlv_list.setSelection(pos)
+            binding.rlvList.setSelection(pos)
             if (mPageLoader.getPageStatus() == PageLoader.STATUS_LOADING) {
                 mPageLoader.openChapter()
             }
@@ -333,9 +344,9 @@ class NovelReadActivity : BaseActivity() {
         viewModel.saveBookRecord.observe(this, Observer<String> {
             showToast(it)
         })
-        toolbar.setNavigationOnClickListener { finish() }
-        read_setting_sb_brightness.progress = ReadSettingManager.getInstance().brightness
-        rlv_list.setOnScrollListener(object : AbsListView.OnScrollListener {
+        binding.toolbar.setNavigationOnClickListener { finish() }
+        lightBinding.readSettingSbBrightness.progress = ReadSettingManager.getInstance().brightness
+        binding.rlvList.setOnScrollListener(object : AbsListView.OnScrollListener {
             override fun onScroll(
                 view: AbsListView?,
                 firstVisibleItem: Int,
@@ -383,7 +394,7 @@ class NovelReadActivity : BaseActivity() {
                 }
             }
         )
-        read_pv_page.setTouchListener(object : OnTouchListener {
+        binding.readPvPage.setTouchListener(object : OnTouchListener {
             override fun onTouch(): Boolean {
                 return !hideReadMenu()
             }
@@ -398,28 +409,28 @@ class NovelReadActivity : BaseActivity() {
 
             override fun cancel() {}
         })
-        read_tv_category.setOnClickListener {
+        binding.readTvCategory.setOnClickListener {
             //移动到指定位置
             if (mCategoryAdapter.count > 0) {
-                rlv_list.setSelection(mPageLoader.getChapterPos())
+                binding.rlvList.setSelection(mPageLoader.getChapterPos())
             }
             //切换菜单
             toggleMenu(true)
             //打开侧滑动栏
-            read_dl_slide.openDrawer(GravityCompat.START)
+            binding.readDlSlide.openDrawer(GravityCompat.START)
         }
-        tv_light.setOnClickListener {
-            ll_light.isVisible = false
-            rlReadMark.isVisible = false
-            ll_light.isVisible = !ll_light.isVisible
+        binding.tvLight.setOnClickListener {
+            lightBinding.llLight.isVisible = false
+            markBinding.rlReadMark.isVisible = false
+            lightBinding.llLight.isVisible = !lightBinding.llLight.isVisible
         }
-        tv_setting.setOnClickListener {
-            ll_light.isVisible = false
-            rlReadMark.isVisible = false
+        binding.tvSetting.setOnClickListener {
+            lightBinding.llLight.isVisible = false
+            markBinding.rlReadMark.isVisible = false
             toggleMenu(false)
             mSettingDialog.show()
         }
-        read_setting_sb_brightness.setOnSeekBarChangeListener(object :
+        lightBinding.readSettingSbBrightness.setOnSeekBarChangeListener(object :
             SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar, progress: Int, fromUser: Boolean) {
 
@@ -437,37 +448,37 @@ class NovelReadActivity : BaseActivity() {
                 ReadSettingManager.getInstance().brightness = progress
             }
         })
-        tvBookReadMode.setOnClickListener {
+        lightBinding.tvBookReadMode.setOnClickListener {
             mPageLoader.setNightMode(viewModel.negateIsNightMode())
             toggleNightMode()
         }
-        read_tv_brief.setOnClickListener {
+        binding.readTvBrief.setOnClickListener {
             //跳转到简介
             //            val intent = Intent(this, NovelBookDetailActivity::class.java)
 //            intent.putExtra(Constant.Bundle.BookId, Integer.valueOf(mBookId))
 //            startActivity(intent)
         }
-        read_tv_community.setOnClickListener {
-            if (read_ll_bottom_menu.isVisible) {
-                if (rlReadMark.isVisible) {
-                    rlReadMark.isVisible = false
+        binding.readTvCommunity.setOnClickListener {
+            if (binding.readLlBottomMenu.isVisible) {
+                if (markBinding.rlReadMark.isVisible) {
+                    markBinding.rlReadMark.isVisible = false
                 } else {
-                    ll_light.isVisible = false
+                    lightBinding.llLight.isVisible = false
                     //获取书签
                     viewModel.fetchBookSign()
-                    rlReadMark.isVisible = true
+                    markBinding.rlReadMark.isVisible = true
                 }
             }
         }
 
         // 添加书签
-        tvAddMark.setOnClickListener {
+        markBinding.tvAddMark.setOnClickListener {
             mMarkAdapter.edit = false
             viewModel.addBookSign()
         }
 
         // 清除书签
-        tvClear.setOnClickListener {
+        markBinding.tvClear.setOnClickListener {
             if (mMarkAdapter.edit) {
                 val sign = mMarkAdapter.selectList
                 if (sign.isNotEmpty()) {
@@ -481,7 +492,7 @@ class NovelReadActivity : BaseActivity() {
             }
         }
         // 书籍缓存
-        tv_cache.setOnClickListener {
+        binding.tvCache.setOnClickListener {
             val mCollBook = viewModel.getCollBook()
             if (mCollBook.favorite == 0) { //没有收藏 先收藏 然后弹框
                 //设置为已收藏
@@ -491,12 +502,12 @@ class NovelReadActivity : BaseActivity() {
             }
             showDownLoadDialog()
         }
-        rlv_list.setOnItemClickListener { _, _, position, _ ->
-            read_dl_slide.closeDrawer(GravityCompat.START)
+        binding.rlvList.setOnItemClickListener { _, _, position, _ ->
+            binding.readDlSlide.closeDrawer(GravityCompat.START)
             mPageLoader.skipToChapter(position)
         }
-        iv_guide.setOnClickListener {
-            iv_guide.isVisible = false
+        binding.ivGuide.setOnClickListener {
+            binding.ivGuide.isVisible = false
             SpUtil.setBooleanValue(Constant.BookGuide, true)
         }
     }
@@ -561,15 +572,15 @@ class NovelReadActivity : BaseActivity() {
      */
     private fun toggleNightMode() {
         if (viewModel.getIsNightMode()) {
-            tvBookReadMode.text = resources.getString(R.string.book_read_mode_day)
+            lightBinding.tvBookReadMode.text = resources.getString(R.string.book_read_mode_day)
             val drawable = ContextCompat.getDrawable(this, R.drawable.ic_read_menu_moring)
-            tvBookReadMode.setCompoundDrawablesWithIntrinsicBounds(null, drawable, null, null)
-            cl_layout.setBackgroundColor(ContextCompat.getColor(this, R.color.read_bg_night))
+            lightBinding.tvBookReadMode.setCompoundDrawablesWithIntrinsicBounds(null, drawable, null, null)
+            binding.clLayout.setBackgroundColor(ContextCompat.getColor(this, R.color.read_bg_night))
         } else {
-            tvBookReadMode.text = resources.getString(R.string.book_read_mode_night)
+            lightBinding.tvBookReadMode.text = resources.getString(R.string.book_read_mode_night)
             val drawable = ContextCompat.getDrawable(this, R.drawable.ic_read_menu_night)
-            tvBookReadMode.setCompoundDrawablesWithIntrinsicBounds(null, drawable, null, null)
-            cl_layout.setBackgroundColor(
+            lightBinding.tvBookReadMode.setCompoundDrawablesWithIntrinsicBounds(null, drawable, null, null)
+            binding.clLayout.setBackgroundColor(
                     ContextCompat.getColor(
                             this,
                             ReadSettingManager.getInstance().pageStyle.bgColor
@@ -585,7 +596,7 @@ class NovelReadActivity : BaseActivity() {
      */
     private fun hideReadMenu(): Boolean {
         SystemBarUtil.hideSystemBar(this,viewModel.getIsFullScreen())
-        if (read_abl_top_menu.isVisible) {
+        if (binding.readAblTopMenu.isVisible) {
             toggleMenu(true)
             return true
         } else if (mSettingDialog.isShowing) {
@@ -600,23 +611,23 @@ class NovelReadActivity : BaseActivity() {
      * 默认是隐藏的
      */
     private fun toggleMenu(hideStatusBar: Boolean) {
-        ll_light.isVisible = false
-        rlReadMark.isVisible = false
-        if (read_abl_top_menu.isVisible) {
+        lightBinding.llLight.isVisible = false
+        markBinding.rlReadMark.isVisible = false
+        if (binding.readAblTopMenu.isVisible) {
             //关闭
-            read_abl_top_menu.startAnimation(mTopOutAnim)
-            read_ll_bottom_menu.startAnimation(mBottomOutAnim)
-            read_abl_top_menu.isVisible = false
-            read_ll_bottom_menu.isVisible = false
+            binding.readAblTopMenu.startAnimation(mTopOutAnim)
+            binding.readLlBottomMenu.startAnimation(mBottomOutAnim)
+            binding.readAblTopMenu.isVisible = false
+            binding.readLlBottomMenu.isVisible = false
 
             if (hideStatusBar) {
                 SystemBarUtil.hideSystemBar(this,viewModel.getIsFullScreen())
             }
         } else {
-            read_abl_top_menu.isVisible = true
-            read_ll_bottom_menu.isVisible = true
-            read_abl_top_menu.startAnimation(mTopInAnim)
-            read_ll_bottom_menu.startAnimation(mBottomInAnim)
+            binding.readAblTopMenu.isVisible = true
+            binding.readLlBottomMenu.isVisible = true
+            binding.readAblTopMenu.startAnimation(mTopInAnim)
+            binding.readLlBottomMenu.startAnimation(mBottomInAnim)
             SystemBarUtil.showSystemBar(this,viewModel.getIsFullScreen())
         }
     }

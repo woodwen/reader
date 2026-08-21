@@ -1,11 +1,11 @@
 package com.woodnoisu.reader.di
 
-import com.woodnoisu.ktReader.network.HtmlClient
-import com.woodnoisu.ktReader.persistence.BookDao
-import com.woodnoisu.ktReader.persistence.BookSignDao
-import com.woodnoisu.ktReader.persistence.ChapterDao
-import com.woodnoisu.ktReader.persistence.ReadRecordDao
-import com.woodnoisu.ktReader.repository.*
+import com.woodnoisu.reader.network.HtmlClient
+import com.woodnoisu.reader.persistence.BookDao
+import com.woodnoisu.reader.persistence.BookSignDao
+import com.woodnoisu.reader.persistence.ChapterDao
+import com.woodnoisu.reader.persistence.ReadRecordDao
+import com.woodnoisu.reader.repository.*
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn

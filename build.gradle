@@ -4,6 +4,9 @@ buildscript {
 
     repositories {
         google()
+        mavenCentral()
+        maven { url "https://maven.aliyun.com/repository/public" }
+        gradlePluginPortal()
         jcenter()
     }
 
@@ -19,8 +22,14 @@ buildscript {
 allprojects {
     repositories {
         google()
+        mavenCentral()
+        maven { url "https://maven.aliyun.com/repository/public" }
         jcenter()
         maven { url "https://jitpack.io"}
+    }
+
+    configurations.all {
+        resolutionStrategy.force "org.xerial:sqlite-jdbc:3.36.0.3"
     }
 }
 

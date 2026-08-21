@@ -3,7 +3,7 @@ package com.woodnoisu.reader.di
 import android.app.Application
 import androidx.room.Room
 import com.squareup.moshi.Moshi
-import com.woodnoisu.ktReader.persistence.*
+import com.woodnoisu.reader.persistence.*
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn

@@ -1,5 +1,8 @@
+.DS_Store
+/docs/spec/
 /.idea/
 /.gradle/
+/local.properties
 /buildSrc/.gradle/
 /buildSrc/build/
 /app/.gradle/

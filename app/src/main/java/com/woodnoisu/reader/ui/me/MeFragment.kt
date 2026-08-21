@@ -6,9 +6,9 @@ import android.net.Uri
 import com.woodnoisu.reader.R
 import com.woodnoisu.reader.base.BaseFragment
 import com.woodnoisu.reader.constant.Constant
+import com.woodnoisu.reader.databinding.FragmentMeBinding
 import com.woodnoisu.reader.utils.FileUtil
 import com.woodnoisu.reader.utils.SpUtil
-import kotlinx.android.synthetic.main.fragment_me.*
 import java.io.File
 
 
@@ -17,6 +17,9 @@ import java.io.File
  */
 
 class MeFragment : BaseFragment() {
+    private var _binding: FragmentMeBinding? = null
+    private val binding get() = _binding!!
+
     /**
      * 获取界面id
      */
@@ -25,27 +28,29 @@ class MeFragment : BaseFragment() {
     /**
      * 初始化界面
      */
-    override fun initView(){}
+    override fun initView(){
+        _binding = FragmentMeBinding.bind(requireView())
+    }
 
     /**
      * 初始化监听
      */
     override fun initListener(){
         // 音量键控制事件
-        switch_volume.setOnCheckedChangeListener { buttonView, isChecked ->
+        binding.switchVolume.setOnCheckedChangeListener { buttonView, isChecked ->
             SpUtil.setBooleanValue("volume_turn_page", isChecked)
         }
         // 清空缓存事件
-        clear_cache.setOnClickListener { v ->
+        binding.clearCache.setOnClickListener { v ->
             AlertDialog.Builder(activity)
                 .setMessage("确定要清除缓存么(将会删除所有已缓存章节)？").setNegativeButton("取消", null)
                 .setPositiveButton("确定") { _, _ ->
                     FileUtil.deleteFile(Constant.BOOK_CACHE_PATH)
-                    tv_cache.text = "0kb"
+                    binding.tvCache.text = "0kb"
                 }.show()
         }
         // 个人主页
-        tv_about.setOnClickListener {
+        binding.tvAbout.setOnClickListener {
             // 跳转到作者的github
             startActivity(
                 Intent(
@@ -62,7 +67,7 @@ class MeFragment : BaseFragment() {
      */
     override fun initData(){
         // 是否音量键控制翻页
-        switch_volume.isChecked = SpUtil.getBooleanValue("volume_turn_page", true)
+        binding.switchVolume.isChecked = SpUtil.getBooleanValue("volume_turn_page", true)
         // 获取缓存文件大小
         val cacheSize = FileUtil.getDirSize(File(Constant.BOOK_CACHE_PATH)) / 1024
         //初始化缓存文件大小单位
@@ -72,6 +77,11 @@ class MeFragment : BaseFragment() {
             "MB"
         }
         //附值
-        tv_cache.text = "$cacheSize$unit"
+        binding.tvCache.text = "$cacheSize$unit"
+    }
+
+    override fun onDestroyView() {
+        _binding = null
+        super.onDestroyView()
     }
 }
