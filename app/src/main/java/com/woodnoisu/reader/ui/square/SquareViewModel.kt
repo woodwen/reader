@@ -5,6 +5,7 @@ import androidx.annotation.MainThread
 import androidx.lifecycle.*
 import com.woodnoisu.reader.base.BaseViewModel
 import com.woodnoisu.reader.model.*
+import com.woodnoisu.reader.model.source.SourceOption
 import com.woodnoisu.reader.repository.SquareRepository
 import com.woodnoisu.reader.utils.LogUtil
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -27,6 +28,8 @@ class SquareViewModel @Inject constructor(
     val bookInfo: LiveData<ResponseBookInfo>
 
     private val _shopName: MutableLiveData<String> = MutableLiveData()
+    private val _shopTitle: MutableLiveData<String> = MutableLiveData()
+    private val _shopDynamic: MutableLiveData<Boolean> = MutableLiveData()
     private val _book: MutableLiveData<BookBean> = MutableLiveData()
     //private val _remoteBookList: MutableLiveData<ArrayList<BookBean>> = MutableLiveData()
     private val _currentPage: MutableLiveData<Int> = MutableLiveData()
@@ -35,6 +38,9 @@ class SquareViewModel @Inject constructor(
     private val _type: MutableLiveData<String> = MutableLiveData()
     private val _squareMessage: MutableLiveData<String?> = MutableLiveData()
     val squareMessage: LiveData<String?> get() = _squareMessage
+    private val sourceOptionsFetching: MutableLiveData<Unit> = MutableLiveData()
+    val sourceOptions: LiveData<List<SourceOption>>
+    private val _sourceOptions: MutableLiveData<List<SourceOption>> = MutableLiveData()
 
     init {
         LogUtil.i("init SquareViewModel")
@@ -46,6 +52,15 @@ class SquareViewModel @Inject constructor(
 
         // 初始化远程书籍容器
         //_remoteBookList.value = ArrayList()
+        val fixedOptions = squareRepository.getFixedSourceOptions()
+        _sourceOptions.value = fixedOptions
+        fixedOptions.firstOrNull()?.let { fetchShopOption(it) }
+
+        sourceOptions = sourceOptionsFetching.switchMap {
+            launchOnViewModelScope {
+                squareRepository.fetchSourceOptions().asLiveData()
+            }
+        }
 
         // 根据类型搜索
         searchType = searchTypeFetching.switchMap { request ->
@@ -143,6 +158,9 @@ class SquareViewModel @Inject constructor(
 
         if (keyword.isNotBlank()) {
             fetchSearchKeyWord(keyword, p)
+        } else if (isDynamicSource()) {
+            _squareMessage.value = "动态书源请先输入书名或作者搜索"
+            _toast.value = "动态书源请先搜索"
         } else {
             fetchSearchType(type, p)
         }
@@ -191,6 +209,16 @@ class SquareViewModel @Inject constructor(
     }
 
     @MainThread
+    fun getShopTitle(): String {
+        return _shopTitle.value ?: getShopName()
+    }
+
+    @MainThread
+    fun hasShopName(): Boolean {
+        return !_shopName.value.isNullOrBlank()
+    }
+
+    @MainThread
     fun getBookBean(): BookBean? {
         return _book.value
     }
@@ -209,9 +237,12 @@ class SquareViewModel @Inject constructor(
     }
 
     @MainThread
-    fun getParses():List<String>{
-        return squareRepository.getParses()
+    fun getSourceOptionsSnapshot():List<SourceOption>{
+        return _sourceOptions.value ?: squareRepository.getFixedSourceOptions()
     }
+
+    @MainThread
+    fun isDynamicSource(): Boolean = _shopDynamic.value == true
 
     @MainThread
     fun isLastPage():Boolean {
@@ -243,6 +274,32 @@ class SquareViewModel @Inject constructor(
     @MainThread
     fun fetchShopName(shopName:String){
         _shopName.value=shopName
+        _shopTitle.value = shopName
+        _shopDynamic.value = false
+    }
+
+    @MainThread
+    fun fetchShopOption(sourceOption: SourceOption) {
+        _shopName.value = sourceOption.key
+        _shopTitle.value = sourceOption.name
+        _shopDynamic.value = sourceOption.dynamic
+    }
+
+    @MainThread
+    fun fetchSourceOptions() {
+        sourceOptionsFetching.value = Unit
+    }
+
+    @MainThread
+    fun updateSourceOptions(options: List<SourceOption>) {
+        _sourceOptions.value = options
+    }
+
+    @MainThread
+    fun selectDefaultSourceIfNeeded(options: List<SourceOption>) {
+        if (!hasShopName() && options.isNotEmpty()) {
+            fetchShopOption(options[0])
+        }
     }
 
     @MainThread

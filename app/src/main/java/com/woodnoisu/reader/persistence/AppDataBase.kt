@@ -6,6 +6,7 @@ import com.woodnoisu.reader.model.BookBean
 import com.woodnoisu.reader.model.BookSignBean
 import com.woodnoisu.reader.model.ChapterBean
 import com.woodnoisu.reader.model.ReadRecordBean
+import com.woodnoisu.reader.model.source.BookSource
 
 /**
  * 数据库操作类
@@ -14,13 +15,15 @@ import com.woodnoisu.reader.model.ReadRecordBean
         BookBean::class,
         ChapterBean::class,
         BookSignBean::class,
-        ReadRecordBean::class], version = 1, exportSchema = true)
+        ReadRecordBean::class,
+        BookSource::class], version = 2, exportSchema = true)
 //@TypeConverters(value = [TypeResponseConverter::class])
 abstract class AppDataBase : RoomDatabase() {
     abstract fun bookDao(): BookDao
     abstract fun chapterDao(): ChapterDao
     abstract fun bookSignDao(): BookSignDao
     abstract fun readRecordDao(): ReadRecordDao
+    abstract fun bookSourceDao(): BookSourceDao
 
 //    companion object {
 //

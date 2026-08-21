@@ -1,13 +1,19 @@
 package com.woodnoisu.reader.network
 
 import com.woodnoisu.reader.model.*
+import com.woodnoisu.reader.model.source.SourceOption
 import com.woodnoisu.reader.network.parse.BQGParse
 import com.woodnoisu.reader.network.parse.HtmlParse
 import com.woodnoisu.reader.network.parse.QWYDParse
+import com.woodnoisu.reader.network.rule.RuleBookParse
+import com.woodnoisu.reader.persistence.BookSourceDao
 import javax.inject.Inject
 import kotlin.collections.ArrayList
 
-class HtmlClient @Inject constructor(htmlService: HtmlService) {
+class HtmlClient @Inject constructor(
+    private val htmlService: HtmlService,
+    private val bookSourceDao: BookSourceDao
+) {
 
     private val parseMap: Map<String, HtmlParse> =
         mapOf("全文阅读" to QWYDParse(htmlService),
@@ -20,11 +26,21 @@ class HtmlClient @Inject constructor(htmlService: HtmlService) {
         return parseMap.keys.toList()
     }
 
+    fun getFixedSourceOptions(): List<SourceOption> {
+        return parseMap.keys.map { SourceOption(it, it, false) }
+    }
+
+    suspend fun getSourceOptions(): List<SourceOption> {
+        return getFixedSourceOptions() + bookSourceDao.getAllEnabled().map {
+            SourceOption(it.bookSourceUrl, it.displayName(), true)
+        }
+    }
+
     /**
      * 获取类型
      */
     fun getTypeArray(shopName:String):List<String>{
-        return parseMap[shopName]?.typeMap?.keys!!.toList()
+        return parseMap[shopName]?.typeMap?.keys?.toList() ?: listOf("仅搜索")
     }
 
     /**
@@ -32,7 +48,10 @@ class HtmlClient @Inject constructor(htmlService: HtmlService) {
      */
     suspend fun getBookInfo(shopName:String,bookUrl: String): BookBean? {
         val parse = parseMap[shopName]
-        return parse?.getBookInfo(bookUrl)
+        if (parse != null) {
+            return parse.getBookInfo(bookUrl)
+        }
+        return getRuleParse(shopName)?.getBookInfo(bookUrl)
     }
 
     /**
@@ -42,6 +61,9 @@ class HtmlClient @Inject constructor(htmlService: HtmlService) {
         val parse = parseMap[shopName]
         if(parse!=null){
             return parse.getSearchByKeyword(keyword,page)
+        }
+        getRuleParse(shopName)?.let {
+            return it.getSearchByKeyword(keyword, page)
         }
         return ResponseSearchPageByKeyword()
     }
@@ -57,6 +79,9 @@ class HtmlClient @Inject constructor(htmlService: HtmlService) {
         val parse = parseMap[shopName]
         if (parse != null) {
             return parse.getSearchByType(typeName, page)
+        }
+        getRuleParse(shopName)?.let {
+            return it.getSearchByType(typeName, page)
         }
         return ResponseSearchPageByType()
     }
@@ -75,6 +100,9 @@ class HtmlClient @Inject constructor(htmlService: HtmlService) {
         if (parse != null) {
             return parse.getChapterList(bookUrl, chaptersUrl,startCharter,limitCharter)
         }
+        getRuleParse(shopName)?.let {
+            return it.getChapterList(bookUrl, chaptersUrl, startCharter, limitCharter)
+        }
         return ArrayList()
     }
 
@@ -83,6 +111,15 @@ class HtmlClient @Inject constructor(htmlService: HtmlService) {
      */
     suspend fun getChapterContent(shopName:String, chapterUrl: String): String? {
         val parse = parseMap[shopName]
-        return parse?.getChapterContent(chapterUrl)
+        if (parse != null) {
+            return parse.getChapterContent(chapterUrl)
+        }
+        return getRuleParse(shopName)?.getChapterContent(chapterUrl)
+    }
+
+    private suspend fun getRuleParse(sourceUrl: String): RuleBookParse? {
+        val source = bookSourceDao.getBookSource(sourceUrl) ?: return null
+        if (!source.enabled) return null
+        return RuleBookParse(htmlService, source)
     }
 }

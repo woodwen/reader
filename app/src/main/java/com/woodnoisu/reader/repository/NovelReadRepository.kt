@@ -256,6 +256,7 @@ class NovelReadRepository @Inject constructor(
                         chapterModel.content = chapterBean.content
                         //chapterModel.bookName = chapterBean.bookName
                         chapterModel.bookUrl = chapterBean.bookUrl
+                        chapterModel.shopName = chapterBean.shopName
                         chapterDao.update(chapterModel)
                     }
                 } else {

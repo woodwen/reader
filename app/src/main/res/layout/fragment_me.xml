@@ -55,6 +55,19 @@
             android:src="@drawable/arrow_right" />
     </LinearLayout>
 
+    <TextView
+        android:id="@+id/tv_book_source"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="1dp"
+        android:background="@color/white"
+        android:drawableRight="@drawable/arrow_right"
+        android:gravity="center_vertical"
+        android:padding="15dp"
+        android:text="书源管理"
+        android:textColor="@color/black_text"
+        android:textSize="18dp" />
+
 
     <TextView
         android:id="@+id/tv_about"

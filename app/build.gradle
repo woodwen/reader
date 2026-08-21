@@ -120,12 +120,15 @@ dependencies {
     testImplementation "androidx.test:core:$versions.androidxTest"
     testImplementation "com.nhaarman.mockitokotlin2:mockito-kotlin:$versions.mockitoKotlinVersion"
     testImplementation "org.mockito:mockito-inline:$versions.mockitoInlineVersion"
+    testImplementation "org.xerial:sqlite-jdbc:3.36.0.3"
     testImplementation "app.cash.turbine:turbine:$versions.turbineVersion"
     testImplementation "org.robolectric:robolectric:$versions.robolectricVersion"
     androidTestImplementation "com.google.truth:truth:$versions.truthVersion"
+    androidTestImplementation "androidx.test:runner:1.3.0"
     androidTestImplementation "androidx.test.ext:junit:$versions.androidxTestJunit"
     androidTestImplementation "com.android.support.test:runner:$versions.androidTestRunner"
     androidTestImplementation "androidx.test.espresso:espresso-core:$versions.espressoVersion"
+    androidTestImplementation "com.squareup.okhttp3:mockwebserver:$versions.okhttpVersion"
 
 
     /******************************* other ********************************/

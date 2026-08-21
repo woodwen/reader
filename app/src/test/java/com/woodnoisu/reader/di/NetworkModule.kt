@@ -1,6 +1,7 @@
 package com.woodnoisu.reader.di
 
 import com.woodnoisu.reader.network.*
+import com.woodnoisu.reader.persistence.BookSourceDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -33,7 +34,7 @@ object NetworkModule {
 
   @Provides
   @Singleton
-  fun provideHtmlClient(htmlService: HtmlService): HtmlClient {
-    return HtmlClient(htmlService)
+  fun provideHtmlClient(htmlService: HtmlService, bookSourceDao: BookSourceDao): HtmlClient {
+    return HtmlClient(htmlService, bookSourceDao)
   }
 }

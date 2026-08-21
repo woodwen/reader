@@ -12,6 +12,7 @@
     <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.CAMERA" />
 
     <application
         android:name="com.woodnoisu.reader.App"
@@ -27,6 +28,25 @@
             android:name=".base.ContextProvider"
             android:authorities="${applicationId}.contextprovider"
             android:exported="false" />
+        <activity android:name="com.woodnoisu.reader.ui.qrcode.QrCodeActivity" />
+        <activity android:name="com.woodnoisu.reader.ui.source.BookSourceEditActivity" />
+        <activity
+            android:name="com.woodnoisu.reader.ui.source.BookSourceActivity"
+            android:launchMode="singleTop">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data
+                    android:host="booksource"
+                    android:scheme="yuedu" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/plain" />
+            </intent-filter>
+        </activity>
         <activity android:name="com.woodnoisu.reader.ui.main.MainActivity"/>
         <activity android:name="com.woodnoisu.reader.ui.novelRead.NovelReadActivity"/>
         <activity

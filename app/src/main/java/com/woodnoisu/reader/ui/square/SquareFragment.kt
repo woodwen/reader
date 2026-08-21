@@ -68,10 +68,19 @@ class SquareFragment: BaseFragment() {
         binding.searchTitle.tvSearchTitle.setOnClickListener {
             MaterialDialog(requireContext()).show {
                 title(text = "书城分类")
-                listItems(items = viewModel.getParses()) { _, _, text ->
-                    viewModel.fetchShopName(text.toString())
-                    val typeName = viewModel.getTypes()[0]
-                    searchData(typeName = typeName)
+                val options = viewModel.getSourceOptionsSnapshot()
+                listItems(items = options.map { it.name }) { _, index, _ ->
+                    val option = options[index]
+                    viewModel.fetchShopOption(option)
+                    if (option.dynamic) {
+                        squareAdapter.clear()
+                        binding.searchTitle.tvSearchTitle.text = viewModel.getShopTitle()
+                        binding.searchTitle.tvSearchFilter.text = "仅搜索"
+                        showSquareMessage("动态书源请先输入书名或作者搜索")
+                    } else {
+                        val typeName = viewModel.getTypes()[0]
+                        searchData(typeName = typeName)
+                    }
                 }
                 lifecycleOwner(requireActivity())
             }
@@ -79,6 +88,10 @@ class SquareFragment: BaseFragment() {
 
         // 小说分类弹出框事件
         binding.searchTitle.tvSearchFilter.setOnClickListener {
+            if (viewModel.isDynamicSource()) {
+                viewModel.toastMsg("动态书源仅支持搜索")
+                return@setOnClickListener
+            }
             MaterialDialog(requireContext()).show {
                 title(text = "小说分类")
                 listItems(items = viewModel.getTypes()) { _, _, text ->
@@ -114,8 +127,8 @@ class SquareFragment: BaseFragment() {
 
         // 点击项目事件
         squareAdapter.itemClickListener = object : SquareAdapter.OnBookItemClickListener {
-            override fun openItem(bookBean: BookBean) {
-                viewModel.fetchBookInfo(bookBean.url)
+            override fun openItem(t: BookBean) {
+                viewModel.fetchBookInfo(t.url)
             }
         }
 
@@ -151,6 +164,15 @@ class SquareFragment: BaseFragment() {
             showSquareMessage(it)
         })
 
+        viewModel.sourceOptions.observe(viewLifecycleOwner, {
+            viewModel.updateSourceOptions(it)
+            viewModel.selectDefaultSourceIfNeeded(it)
+            if (it.isNotEmpty() && squareAdapter.itemCount == 0 && !viewModel.isDynamicSource()) {
+                val typeName = viewModel.getTypes()[0]
+                searchData(typeName = typeName)
+            }
+        })
+
         //是否显示加载框
         viewModel.isLoading.observe(viewLifecycleOwner, {
             binding.refreshLayout.isRefreshing = it
@@ -183,10 +205,10 @@ class SquareFragment: BaseFragment() {
                     //icon(drawable = image)
                     message(text = "作者：${bookBean.author}\n类别：${bookBean.category}\n状态：${bookBean.status}\n简介：${bookBean.desc}")
                     positiveButton(text = "开始阅读") {
-                        val bookBean = viewModel.getBookBean()
-                        if (bookBean != null) {
+                        val selectedBook = viewModel.getBookBean()
+                        if (selectedBook != null) {
                             // 打开 书籍
-                            NovelReadActivity.startFromActivity(requireActivity(), bookBean)
+                            NovelReadActivity.startFromActivity(requireActivity(), selectedBook)
                         } else {
                             viewModel.toastMsg("打开书籍异常，请重新获取书籍")
                         }
@@ -205,11 +227,7 @@ class SquareFragment: BaseFragment() {
      * 初始化数据
      */
     override fun initData() {
-        val parseName = viewModel.getParses()[0]
-        viewModel.fetchShopName(parseName)
-
-        val typeName = viewModel.getTypes()[0]
-        searchData(typeName = typeName)
+        viewModel.fetchSourceOptions()
     }
 
     /**
@@ -217,10 +235,10 @@ class SquareFragment: BaseFragment() {
      */
     private fun fetchPage(currentPage:Int,totalPage:Int,bookList:List<BookBean>) {
         showSquareMessage(null)
-        if (!bookList.isNullOrEmpty()) {
-            if (currentPage == 1) {
-                squareAdapter.refreshItems(bookList)
-            } else {
+        if (currentPage == 1) {
+            squareAdapter.refreshItems(bookList)
+        } else {
+            if (bookList.isNotEmpty()) {
                 squareAdapter.addItems(bookList)
             }
         }
@@ -237,13 +255,13 @@ class SquareFragment: BaseFragment() {
     ) {
         if (keyWord.isBlank()) {
             // 根据类型搜索
-            viewModel?.fetchSearchType(typeName, 1)
-            binding.searchTitle.tvSearchTitle.text = viewModel.getShopName()
+            viewModel.fetchSearchType(typeName, 1)
+            binding.searchTitle.tvSearchTitle.text = viewModel.getShopTitle()
             binding.searchTitle.tvSearchFilter.text = typeName
         } else {
             //根据关键字搜索
             viewModel.fetchSearchKeyWord(keyWord, 1)
-            binding.searchTitle.tvSearchTitle.text = viewModel.getShopName()
+            binding.searchTitle.tvSearchTitle.text = viewModel.getShopTitle()
             binding.searchTitle.tvSearchFilter.text = keyWord
         }
     }

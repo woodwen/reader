@@ -7,6 +7,7 @@ import com.woodnoisu.reader.R
 import com.woodnoisu.reader.base.BaseFragment
 import com.woodnoisu.reader.constant.Constant
 import com.woodnoisu.reader.databinding.FragmentMeBinding
+import com.woodnoisu.reader.ui.source.BookSourceActivity
 import com.woodnoisu.reader.utils.FileUtil
 import com.woodnoisu.reader.utils.SpUtil
 import java.io.File
@@ -48,6 +49,9 @@ class MeFragment : BaseFragment() {
                     FileUtil.deleteFile(Constant.BOOK_CACHE_PATH)
                     binding.tvCache.text = "0kb"
                 }.show()
+        }
+        binding.tvBookSource.setOnClickListener {
+            startActivity(Intent(requireContext(), BookSourceActivity::class.java))
         }
         // 个人主页
         binding.tvAbout.setOnClickListener {

@@ -145,5 +145,6 @@ class SquareAdapter: RecyclerView.Adapter<SquareAdapter.ViewHolder>() {
      */
     fun clear() {
         mList.clear()
+        notifyDataSetChanged()
     }
 }

@@ -3,6 +3,7 @@ package com.woodnoisu.reader.repository
 import androidx.annotation.MainThread
 import androidx.annotation.WorkerThread
 import com.woodnoisu.reader.model.*
+import com.woodnoisu.reader.model.source.SourceOption
 import com.woodnoisu.reader.network.HtmlClient
 import com.woodnoisu.reader.persistence.BookDao
 import com.woodnoisu.reader.utils.LogUtil
@@ -179,10 +180,20 @@ class SquareRepository @Inject constructor(
     }
 
     /**
-     * 获取网站类型
+     * 获取固定书城
      */
     @MainThread
     fun getParses(): List<String> {
         return htmlClient.getParseArray()
     }
+
+    @MainThread
+    fun getFixedSourceOptions(): List<SourceOption> {
+        return htmlClient.getFixedSourceOptions()
+    }
+
+    @WorkerThread
+    suspend fun fetchSourceOptions() = flow {
+        emit(htmlClient.getSourceOptions())
+    }.flowOn(Dispatchers.IO)
 }
