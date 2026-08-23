@@ -12,15 +12,23 @@ import com.woodnoisu.reader.persistence.BookSourceDao
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class HtmlClientTest {
 
     @Test
-    fun sourceOptionsSkipEnabledSourcesWithoutSearchOrExploreRules() = runBlocking {
+    fun sourceOptionsOnlyReturnEnabledManagedSourcesWithExploreRules() = runBlocking {
         val dao = FakeBookSourceDao(
             listOf(
+                BookSource(
+                    bookSourceName = "停用源",
+                    bookSourceUrl = "https://disabled.example",
+                    enabled = false,
+                    searchUrl = "https://disabled.example/search?q={{key}}",
+                    ruleSearch = SearchRule(bookList = ".result")
+                ),
                 BookSource(
                     bookSourceName = "无规则源",
                     bookSourceUrl = "https://invalid.example",
@@ -39,6 +47,15 @@ class HtmlClientTest {
                     enabled = true,
                     exploreUrl = "https://explore.example/list/{{page}}",
                     ruleExplore = ExploreRule(bookList = ".result")
+                ),
+                BookSource(
+                    bookSourceName = "搜索发现源",
+                    bookSourceUrl = "https://search-explore.example",
+                    enabled = true,
+                    searchUrl = "https://search-explore.example/search?q={{key}}",
+                    ruleSearch = SearchRule(bookList = ".result"),
+                    exploreUrl = "https://search-explore.example/list/{{page}}",
+                    ruleExplore = ExploreRule(bookList = ".result")
                 )
             )
         )
@@ -46,11 +63,23 @@ class HtmlClientTest {
 
         val options = client.getSourceOptions()
 
-        assertTrue(options.any { it.name == "全文阅读" })
-        assertTrue(options.any { it.key == "https://search.example" && it.dynamic && !it.canExplore })
+        assertFalse(options.any { it.name == "全文阅读" || it.name == "笔趣阁" })
+        assertFalse(options.any { it.key == "https://disabled.example" })
+        assertFalse(options.any { it.key == "https://search.example" })
         assertTrue(options.any { it.key == "https://explore.example" && it.dynamic && it.canExplore })
+        assertTrue(options.any { it.key == "https://search-explore.example" && it.dynamic && it.canExplore })
         assertFalse(options.any { it.key == "https://invalid.example" })
         assertEquals(options.distinctBy { it.key }.size, options.size)
+    }
+
+    @Test
+    fun sourceOptionsDoNotCreateDefaultSourcesWhenManagedSourcesAreEmpty() = runBlocking {
+        val client = HtmlClient(HtmlService(), FakeBookSourceDao(emptyList()))
+
+        val options = client.getSourceOptions()
+
+        assertTrue(options.isEmpty())
+        assertNull(client.getBookInfo("全文阅读", "https://book.example/1"))
     }
 
     @Test

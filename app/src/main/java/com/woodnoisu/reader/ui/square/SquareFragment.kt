@@ -1,14 +1,12 @@
 package com.woodnoisu.reader.ui.square
 
 import android.annotation.SuppressLint
-import android.content.Context
-import android.graphics.drawable.Drawable
+import android.content.Intent
 import android.text.InputType
 import android.view.View
 import android.widget.Toast
 import androidx.annotation.VisibleForTesting
 import androidx.fragment.app.viewModels
-import androidx.lifecycle.Observer
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.afollestad.materialdialogs.MaterialDialog
 import com.afollestad.materialdialogs.input.input
@@ -19,6 +17,7 @@ import com.woodnoisu.reader.base.BaseFragment
 import com.woodnoisu.reader.databinding.FragmentSquareBinding
 import com.woodnoisu.reader.model.*
 import com.woodnoisu.reader.ui.novelRead.NovelReadActivity
+import com.woodnoisu.reader.ui.source.BookSourceActivity
 import dagger.hilt.android.AndroidEntryPoint
 
 /**
@@ -66,24 +65,23 @@ class SquareFragment: BaseFragment() {
     override fun initListener() {
         // 小说书城弹出框事件
         binding.searchTitle.tvSearchTitle.setOnClickListener {
+            val options = viewModel.getSourceOptionsSnapshot()
+            if (options.isEmpty()) {
+                openBookSourceManagement()
+                return@setOnClickListener
+            }
             MaterialDialog(requireContext()).show {
                 title(text = "书城分类")
-                val options = viewModel.getSourceOptionsSnapshot()
                 listItems(items = options.map { it.name }) { _, index, _ ->
                     val option = options[index]
-                    viewModel.fetchShopOption(option)
-                    if (option.dynamic) {
-                        binding.searchTitle.tvSearchTitle.text = viewModel.getShopTitle()
-                        if (option.canExplore) {
-                            searchData(typeName = viewModel.getTypes()[0])
-                        } else {
-                            squareAdapter.clear()
-                            binding.searchTitle.tvSearchFilter.text = "仅搜索"
-                            showSquareMessage("动态书源请先输入书名或作者搜索")
-                        }
+                    viewModel.selectShopOption(option)
+                    binding.searchTitle.tvSearchTitle.text = viewModel.getShopTitle()
+                    if (option.canExplore) {
+                        searchData(typeName = viewModel.getTypes()[0])
                     } else {
-                        val typeName = viewModel.getTypes()[0]
-                        searchData(typeName = typeName)
+                        squareAdapter.clear()
+                        binding.searchTitle.tvSearchFilter.text = "仅搜索"
+                        viewModel.showSearchOnlyMessage()
                     }
                 }
                 lifecycleOwner(requireActivity())
@@ -92,25 +90,24 @@ class SquareFragment: BaseFragment() {
 
         // 小说分类弹出框事件
         binding.searchTitle.tvSearchFilter.setOnClickListener {
-            if (viewModel.isDynamicSource()) {
-                if (viewModel.canExplore()) {
-                    searchData(typeName = viewModel.getTypes()[0])
-                } else {
-                    viewModel.toastMsg("动态书源仅支持搜索")
-                }
+            if (!viewModel.hasShopName()) {
+                openBookSourceManagement()
                 return@setOnClickListener
             }
-            MaterialDialog(requireContext()).show {
-                title(text = "小说分类")
-                listItems(items = viewModel.getTypes()) { _, _, text ->
-                    searchData(typeName = text.toString())
-                }
-                lifecycleOwner(requireActivity())
+            if (viewModel.canExplore()) {
+                searchData(typeName = viewModel.getTypes()[0])
+            } else {
+                viewModel.toastMsg("当前书源仅支持搜索")
+                return@setOnClickListener
             }
         }
 
         // 设置搜索事件
         binding.searchTitle.tvSearchSearch.setOnClickListener {
+            if (!viewModel.hasShopName()) {
+                viewModel.showNoSourceMessage()
+                return@setOnClickListener
+            }
             MaterialDialog(requireContext()).show {
                 title(text = "搜索小说")
                 input(
@@ -130,7 +127,17 @@ class SquareFragment: BaseFragment() {
 
         // 刷新事件
         binding.refreshLayout.setOnRefreshListener {
-            viewModel.fetchSearch(1)
+            if (viewModel.hasShopName()) {
+                viewModel.fetchSearch(1)
+            } else {
+                viewModel.fetchSourceOptions()
+            }
+        }
+
+        binding.tvSquareMessage.setOnClickListener {
+            if (!viewModel.hasShopName() && viewModel.getSourceOptionsSnapshot().isEmpty()) {
+                openBookSourceManagement()
+            }
         }
 
         // 点击项目事件
@@ -175,10 +182,29 @@ class SquareFragment: BaseFragment() {
         viewModel.sourceOptions.observe(viewLifecycleOwner, {
             viewModel.updateSourceOptions(it)
             val selectedChanged = viewModel.selectDefaultSourceIfNeeded(it)
-            if (it.isNotEmpty() && (selectedChanged || squareAdapter.itemCount == 0) && !viewModel.isDynamicSource()) {
+            if (it.isEmpty()) {
+                squareAdapter.clear()
+                binding.searchTitle.tvSearchTitle.text = viewModel.getShopTitle()
+                binding.searchTitle.tvSearchFilter.text = "书源管理"
+                showSquareMessage(SquareViewModel.NO_SOURCE_MESSAGE)
+            } else if (viewModel.canExplore()) {
                 val typeName = viewModel.getTypes()[0]
-                searchData(typeName = typeName)
+                binding.searchTitle.tvSearchTitle.text = viewModel.getShopTitle()
+                binding.searchTitle.tvSearchFilter.text = typeName
+                if (selectedChanged || squareAdapter.itemCount == 0) {
+                    searchData(typeName = typeName)
+                }
+            } else {
+                binding.searchTitle.tvSearchTitle.text = viewModel.getShopTitle()
+                binding.searchTitle.tvSearchFilter.text = "仅搜索"
+                if (selectedChanged) {
+                    squareAdapter.clear()
+                }
+                if (squareAdapter.itemCount == 0) {
+                    viewModel.showSearchOnlyMessage()
+                }
             }
+            binding.refreshLayout.isRefreshing = false
         })
 
         //是否显示加载框
@@ -264,6 +290,12 @@ class SquareFragment: BaseFragment() {
         keyWord: String = "",
         typeName: String = ""
     ) {
+        if (!viewModel.hasShopName()) {
+            viewModel.showNoSourceMessage()
+            binding.searchTitle.tvSearchTitle.text = viewModel.getShopTitle()
+            binding.searchTitle.tvSearchFilter.text = "书源管理"
+            return
+        }
         if (keyWord.isBlank()) {
             // 根据类型搜索
             viewModel.fetchSearchType(typeName, 1)
@@ -281,12 +313,19 @@ class SquareFragment: BaseFragment() {
         if (message.isNullOrBlank()) {
             binding.tvSquareMessage.text = ""
             binding.tvSquareMessage.visibility = View.GONE
+            binding.tvSquareMessage.isClickable = false
             binding.rvTypes.visibility = View.VISIBLE
         } else {
             binding.tvSquareMessage.text = message
             binding.tvSquareMessage.visibility = View.VISIBLE
+            binding.tvSquareMessage.isClickable = !viewModel.hasShopName() &&
+                viewModel.getSourceOptionsSnapshot().isEmpty()
             binding.rvTypes.visibility = View.GONE
         }
+    }
+
+    private fun openBookSourceManagement() {
+        startActivity(Intent(requireContext(), BookSourceActivity::class.java))
     }
 
     override fun onDestroyView() {

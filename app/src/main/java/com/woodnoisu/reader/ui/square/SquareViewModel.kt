@@ -1,6 +1,5 @@
 package com.woodnoisu.reader.ui.square
 
-import android.graphics.drawable.Drawable
 import androidx.annotation.MainThread
 import androidx.lifecycle.*
 import com.woodnoisu.reader.base.BaseViewModel
@@ -15,6 +14,11 @@ import javax.inject.Inject
 class SquareViewModel @Inject constructor(
     private val squareRepository: SquareRepository
 ) : BaseViewModel() {
+    companion object {
+        const val NO_SOURCE_MESSAGE = "暂无可用书源，请先到书源管理导入或启用书源"
+        const val SEARCH_ONLY_MESSAGE = "当前书源请先输入书名或作者搜索"
+    }
+
     private val searchTypeFetching: MutableLiveData<RequestSearchPageByType> = MutableLiveData()
     val searchType: LiveData<ResponseSearchPageByType>
 
@@ -29,7 +33,6 @@ class SquareViewModel @Inject constructor(
 
     private val _shopName: MutableLiveData<String> = MutableLiveData()
     private val _shopTitle: MutableLiveData<String> = MutableLiveData()
-    private val _shopDynamic: MutableLiveData<Boolean> = MutableLiveData()
     private val _shopExplore: MutableLiveData<Boolean> = MutableLiveData()
     private val _book: MutableLiveData<BookBean> = MutableLiveData()
     //private val _remoteBookList: MutableLiveData<ArrayList<BookBean>> = MutableLiveData()
@@ -53,9 +56,7 @@ class SquareViewModel @Inject constructor(
 
         // 初始化远程书籍容器
         //_remoteBookList.value = ArrayList()
-        val fixedOptions = squareRepository.getFixedSourceOptions()
-        _sourceOptions.value = fixedOptions
-        fixedOptions.firstOrNull()?.let { fetchShopOption(it) }
+        _sourceOptions.value = emptyList()
 
         sourceOptions = sourceOptionsFetching.switchMap {
             launchOnViewModelScope {
@@ -149,6 +150,10 @@ class SquareViewModel @Inject constructor(
 
     @MainThread
     fun fetchSearch(page:Int=-1) {
+        if (!hasShopName()) {
+            showNoSourceMessage()
+            return
+        }
         var p = 1
         var keyword = ""
         var type = ""
@@ -159,9 +164,8 @@ class SquareViewModel @Inject constructor(
 
         if (keyword.isNotBlank()) {
             fetchSearchKeyWord(keyword, p)
-        } else if (isDynamicSource() && !canExplore()) {
-            _squareMessage.value = "动态书源请先输入书名或作者搜索"
-            _toast.value = "动态书源请先搜索"
+        } else if (!canExplore()) {
+            showSearchOnlyMessage(true)
         } else {
             fetchSearchType(type, p)
         }
@@ -169,6 +173,14 @@ class SquareViewModel @Inject constructor(
 
     @MainThread
     fun fetchSearchType(typeName: String, page: Int) {
+        if (!hasShopName()) {
+            showNoSourceMessage()
+            return
+        }
+        if (!canExplore()) {
+            showSearchOnlyMessage(true)
+            return
+        }
         _currentPage.value = page
         _keyWord.value = ""
         if (typeName.isNotBlank()) _type.value = typeName
@@ -181,6 +193,10 @@ class SquareViewModel @Inject constructor(
 
     @MainThread
     fun fetchSearchKeyWord(keyword: String, page: Int) {
+        if (!hasShopName()) {
+            showNoSourceMessage()
+            return
+        }
         _currentPage.value = page
         if (keyword.isNotBlank()) _keyWord.value = keyword
         searchKeyWordFetching.postValue(
@@ -194,6 +210,10 @@ class SquareViewModel @Inject constructor(
 
     @MainThread
     fun fetchBookInfo(bookUrl:String){
+        if (!hasShopName()) {
+            showNoSourceMessage()
+            return
+        }
         bookInfoFetching.value = RequestBookInfo(_shopName.value!!,bookUrl)
     }
 
@@ -206,12 +226,12 @@ class SquareViewModel @Inject constructor(
 
     @MainThread
     fun getShopName(): String {
-        return _shopName.value!!
+        return _shopName.value.orEmpty()
     }
 
     @MainThread
     fun getShopTitle(): String {
-        return _shopTitle.value ?: getShopName()
+        return _shopTitle.value ?: getShopName().ifBlank { "书城" }
     }
 
     @MainThread
@@ -234,19 +254,13 @@ class SquareViewModel @Inject constructor(
 
     @MainThread
     fun getTypes():List<String>{
-        if (isDynamicSource()) {
-            return if (canExplore()) listOf("发现") else listOf("仅搜索")
-        }
-        return squareRepository.getTypes(getShopName())
+        return if (canExplore()) listOf("发现") else listOf("仅搜索")
     }
 
     @MainThread
     fun getSourceOptionsSnapshot():List<SourceOption>{
-        return _sourceOptions.value ?: squareRepository.getFixedSourceOptions()
+        return _sourceOptions.value.orEmpty()
     }
-
-    @MainThread
-    fun isDynamicSource(): Boolean = _shopDynamic.value == true
 
     @MainThread
     fun canExplore(): Boolean = _shopExplore.value == true
@@ -279,19 +293,16 @@ class SquareViewModel @Inject constructor(
     }
 
     @MainThread
-    fun fetchShopName(shopName:String){
-        _shopName.value=shopName
-        _shopTitle.value = shopName
-        _shopDynamic.value = false
-        _shopExplore.value = true
-    }
-
-    @MainThread
     fun fetchShopOption(sourceOption: SourceOption) {
         _shopName.value = sourceOption.key
         _shopTitle.value = sourceOption.name
-        _shopDynamic.value = sourceOption.dynamic
         _shopExplore.value = sourceOption.canExplore
+    }
+
+    @MainThread
+    fun selectShopOption(sourceOption: SourceOption) {
+        fetchShopOption(sourceOption)
+        clearSearchState()
     }
 
     @MainThread
@@ -307,11 +318,22 @@ class SquareViewModel @Inject constructor(
     @MainThread
     fun selectDefaultSourceIfNeeded(options: List<SourceOption>): Boolean {
         val shopName = _shopName.value
-        if (options.isNotEmpty() && (shopName.isNullOrBlank() || options.none { it.key == shopName })) {
-            fetchShopOption(options[0])
+        if (options.isEmpty()) {
+            clearShop()
             return true
         }
-        return false
+        val selected = options.firstOrNull { it.key == shopName } ?: options[0]
+        val changed = selected.key != shopName ||
+            selected.name != _shopTitle.value ||
+            selected.canExplore != _shopExplore.value
+        fetchShopOption(selected)
+        if (changed) {
+            clearSearchState()
+        }
+        if (_squareMessage.value == NO_SOURCE_MESSAGE) {
+            _squareMessage.value = null
+        }
+        return changed
     }
 
     @MainThread
@@ -319,6 +341,40 @@ class SquareViewModel @Inject constructor(
         if(book!=null){
             _book.postValue(book)
         }
+    }
+
+    @MainThread
+    fun showNoSourceMessage() {
+        _isLoading.value = false
+        _squareMessage.value = NO_SOURCE_MESSAGE
+    }
+
+    @MainThread
+    fun showSearchOnlyMessage(toast: Boolean = false) {
+        _isLoading.value = false
+        _squareMessage.value = SEARCH_ONLY_MESSAGE
+        if (toast) {
+            _toast.value = "当前书源请先搜索"
+        }
+    }
+
+    private fun clearShop() {
+        _shopName.value = ""
+        _shopTitle.value = "书城"
+        _shopExplore.value = false
+        clearSearchState()
+        showNoSourceMessage()
+    }
+
+    private fun clearSearchState() {
+        _keyWord.value = ""
+        _type.value = ""
+        resetPaging()
+    }
+
+    private fun resetPaging() {
+        _currentPage.value = 1
+        _totalPage.value = 1
     }
 
 //    private fun fetchRemoteBookList(bookList: List<BookBean>) {

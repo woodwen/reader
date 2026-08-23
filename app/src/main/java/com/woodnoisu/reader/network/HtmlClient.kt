@@ -2,9 +2,6 @@ package com.woodnoisu.reader.network
 
 import com.woodnoisu.reader.model.*
 import com.woodnoisu.reader.model.source.SourceOption
-import com.woodnoisu.reader.network.parse.BQGParse
-import com.woodnoisu.reader.network.parse.HtmlParse
-import com.woodnoisu.reader.network.parse.QWYDParse
 import com.woodnoisu.reader.network.rule.RuleBookParse
 import com.woodnoisu.reader.persistence.BookSourceDao
 import javax.inject.Inject
@@ -15,31 +12,9 @@ class HtmlClient @Inject constructor(
     private val bookSourceDao: BookSourceDao
 ) {
 
-    private val parseMap: Map<String, HtmlParse> =
-        mapOf("全文阅读" to QWYDParse(htmlService),
-              "笔趣阁" to BQGParse(htmlService))
-
-    /**
-     * 获取网站
-     */
-    fun getParseArray():List<String>{
-        return parseMap.keys.toList()
-    }
-
-    fun getFixedSourceOptions(): List<SourceOption> {
-        return parseMap.keys.map {
-            SourceOption(
-                key = it,
-                name = it,
-                dynamic = false,
-                canExplore = true
-            )
-        }
-    }
-
     suspend fun getSourceOptions(): List<SourceOption> {
-        return getFixedSourceOptions() + bookSourceDao.getAllEnabled()
-            .filter { it.supportsSearch() || it.supportsExplore() }
+        return bookSourceDao.getAllEnabled()
+            .filter { it.supportsExplore() }
             .map {
                 SourceOption(
                     key = it.bookSourceUrl,
@@ -62,27 +37,13 @@ class HtmlClient @Inject constructor(
     }
 
     suspend fun getSourceDisplayName(shopName: String): String {
-        if (parseMap.containsKey(shopName)) return shopName
         return bookSourceDao.getBookSource(shopName)?.displayName().orEmpty().ifBlank { shopName }
-    }
-
-    /**
-     * 获取类型
-     */
-    fun getTypeArray(shopName:String):List<String>{
-        return parseMap[shopName]?.typeMap?.keys?.toList() ?: listOf("仅搜索")
     }
 
     /**
      * 获取书籍信息
      */
     suspend fun getBookInfo(shopName:String,bookUrl: String): BookBean? {
-        val parse = parseMap[shopName]
-        if (parse != null) {
-            return parse.getBookInfo(bookUrl)?.apply {
-                sourceDisplayName = shopName
-            }
-        }
         return getRuleParse(shopName)?.getBookInfo(bookUrl)?.apply {
             sourceDisplayName = getSourceDisplayName(shopName)
         }
@@ -92,12 +53,6 @@ class HtmlClient @Inject constructor(
      * 根据关键字搜索
      */
     suspend fun getSearchByKeyword(shopName:String,keyword: String, page: Int): ResponseSearchPageByKeyword {
-        val parse = parseMap[shopName]
-        if(parse!=null){
-            return parse.getSearchByKeyword(keyword,page).also { response ->
-                response.bookBeans.forEach { it.sourceDisplayName = shopName }
-            }
-        }
         getRuleParse(shopName)?.let {
             return it.getSearchByKeyword(keyword, page).also { response ->
                 val displayName = getSourceDisplayName(shopName)
@@ -115,10 +70,6 @@ class HtmlClient @Inject constructor(
         typeName: String,
         page: Int
     ): ResponseSearchPageByType {
-        val parse = parseMap[shopName]
-        if (parse != null) {
-            return parse.getSearchByType(typeName, page)
-        }
         getRuleParse(shopName)?.let {
             return it.getSearchByType(typeName, page)
         }
@@ -135,10 +86,6 @@ class HtmlClient @Inject constructor(
         startCharter:Int,
         limitCharter:Int
     ): ArrayList<ChapterBean> {
-        val parse = parseMap[shopName]
-        if (parse != null) {
-            return parse.getChapterList(bookUrl, chaptersUrl,startCharter,limitCharter)
-        }
         getRuleParse(shopName)?.let {
             return it.getChapterList(bookUrl, chaptersUrl, startCharter, limitCharter)
         }
@@ -149,10 +96,6 @@ class HtmlClient @Inject constructor(
      * 获取章节内容
      */
     suspend fun getChapterContent(shopName:String, chapterUrl: String): String? {
-        val parse = parseMap[shopName]
-        if (parse != null) {
-            return parse.getChapterContent(chapterUrl)
-        }
         return getRuleParse(shopName)?.getChapterContent(chapterUrl)
     }
 

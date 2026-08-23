@@ -1,6 +1,8 @@
 package com.woodnoisu.reader.source
 
 import android.Manifest
+import android.app.Activity
+import android.content.Intent
 import android.os.Build
 import android.os.SystemClock
 import android.view.View
@@ -19,7 +21,11 @@ import androidx.test.espresso.matcher.ViewMatchers.withId
 import androidx.test.espresso.matcher.ViewMatchers.withText
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import androidx.test.runner.lifecycle.ActivityLifecycleMonitorRegistry
+import androidx.test.runner.lifecycle.Stage
 import com.woodnoisu.reader.R
+import com.woodnoisu.reader.ui.main.MainActivity
+import com.woodnoisu.reader.ui.square.SquareFragment
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import org.hamcrest.CoreMatchers.containsString
@@ -30,9 +36,60 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import java.io.FileInputStream
 import java.net.URLEncoder
+import java.util.concurrent.atomic.AtomicBoolean
 
 @RunWith(AndroidJUnit4::class)
 class BookSourceDeviceTest {
+
+    @Test
+    fun squareManagedSourceCanSearchOpenDetailAndStartReading() {
+        val instrumentation = InstrumentationRegistry.getInstrumentation()
+        val context = instrumentation.targetContext
+        val server = MockWebServer()
+        server.start()
+        try {
+            enqueueBookPages(server, searchPageCount = 3)
+            val baseUrl = server.url("/").toString()
+            val timestamp = SystemClock.elapsedRealtime()
+            val searchOnlyName = "仅搜索自动源$timestamp"
+            val sourceName = "书城自动源$timestamp"
+            importBookSource(
+                context.packageName,
+                searchOnlySourceJson(
+                    searchOnlyName,
+                    server.url("/search-only/").toString(),
+                    baseUrl,
+                    -timestamp.toInt() - 1
+                )
+            )
+            val sourceJson = sourceJson(sourceName, baseUrl, -timestamp.toInt())
+
+            importBookSource(context.packageName, sourceJson)
+            onView(withId(R.id.et_search)).perform(replaceText(sourceName), closeSoftKeyboard())
+            waitForText(startsWith("$sourceName (真机)"))
+
+            startMainActivity()
+            waitForView(R.id.navigation_square)
+            onView(withId(R.id.navigation_square)).perform(performViewClick())
+
+            waitUntil(10000) {
+                onView(withId(R.id.tv_search_title)).check(matches(isDisplayed()))
+            }
+            onView(withId(R.id.tv_search_title)).check(matches(withText(sourceName)))
+            assertSquareSourceOptions(sourceName, searchOnlyName)
+            waitForText(sourceName)
+            waitForText("真机自动书", 15000)
+
+            clickVisibleRecyclerItemContaining(R.id.rv_types, "真机自动书")
+            waitForText("开始阅读", 15000)
+            onView(withText("开始阅读")).perform(performViewClick())
+            waitUntil(30000) {
+                onView(withId(R.id.read_pv_page)).check(matches(isDisplayed()))
+            }
+        } finally {
+            server.shutdown()
+        }
+    }
 
     @Test
     fun shelfSearchShowsRealResultsForDouluo() {
@@ -64,34 +121,7 @@ class BookSourceDeviceTest {
             enqueueBookPages(server)
             val baseUrl = server.url("/").toString()
             val sourceName = "真机自动源${SystemClock.elapsedRealtime()}"
-            val sourceJson = """
-                {
-                  "bookSourceName": "$sourceName",
-                  "bookSourceGroup": "真机",
-                  "bookSourceUrl": "$baseUrl",
-                  "enabled": true,
-                  "searchUrl": "${baseUrl}search?q={{key}}&page={{page}}",
-                  "ruleSearch": {
-                    "bookList": ".result",
-                    "name": ".title@text",
-                    "author": ".author@text",
-                    "bookUrl": ".title@href"
-                  },
-                  "ruleBookInfo": {
-                    "name": "h1@text",
-                    "author": ".author@text",
-                    "tocUrl": ".toc@href"
-                  },
-                  "ruleToc": {
-                    "chapterList": ".chapter",
-                    "chapterName": "text",
-                    "chapterUrl": "href"
-                  },
-                  "ruleContent": {
-                    "content": ".content@html"
-                  }
-                }
-            """.trimIndent()
+            val sourceJson = sourceJson(sourceName, baseUrl)
 
             val importUri = "yuedu://booksource/importonline?src=" +
                 URLEncoder.encode(sourceJson, "UTF-8")
@@ -110,7 +140,7 @@ class BookSourceDeviceTest {
                 "am start -W -a android.intent.action.MAIN -c android.intent.category.LAUNCHER " +
                     "-n ${context.packageName}/.ui.StartActivity"
             )
-            waitForText("全文阅读")
+            waitForView(R.id.navigation_me)
 
             onView(withId(R.id.navigation_me)).perform(performViewClick())
             waitForText("书源管理")
@@ -121,9 +151,10 @@ class BookSourceDeviceTest {
         }
     }
 
-    private fun enqueueBookPages(server: MockWebServer) {
-        enqueueSearchPage(server)
-        enqueueSearchPage(server)
+    private fun enqueueBookPages(server: MockWebServer, searchPageCount: Int = 2) {
+        repeat(searchPageCount) {
+            enqueueSearchPage(server)
+        }
         server.enqueue(
             MockResponse().setBody(
                 """
@@ -153,6 +184,82 @@ class BookSourceDeviceTest {
                 """.trimIndent()
             )
         )
+    }
+
+    private fun sourceJson(sourceName: String, baseUrl: String, customOrder: Int = -2000): String {
+        return """
+            {
+              "bookSourceName": "$sourceName",
+              "bookSourceGroup": "真机",
+              "bookSourceUrl": "$baseUrl",
+              "customOrder": $customOrder,
+              "enabled": true,
+              "exploreUrl": "${baseUrl}search?page={{page}}",
+              "searchUrl": "${baseUrl}search?q={{key}}&page={{page}}",
+              "ruleSearch": {
+                "bookList": ".result",
+                "name": ".title@text",
+                "author": ".author@text",
+                "bookUrl": ".title@href"
+              },
+              "ruleExplore": {
+                "bookList": ".result",
+                "name": ".title@text",
+                "author": ".author@text",
+                "bookUrl": ".title@href"
+              },
+              "ruleBookInfo": {
+                "name": "h1@text",
+                "author": ".author@text",
+                "tocUrl": ".toc@href"
+              },
+              "ruleToc": {
+                "chapterList": ".chapter",
+                "chapterName": "text",
+                "chapterUrl": "href"
+              },
+              "ruleContent": {
+                "content": ".content@html"
+              }
+            }
+        """.trimIndent()
+    }
+
+    private fun searchOnlySourceJson(
+        sourceName: String,
+        sourceUrl: String,
+        searchBaseUrl: String,
+        customOrder: Int
+    ): String {
+        return """
+            {
+              "bookSourceName": "$sourceName",
+              "bookSourceGroup": "真机",
+              "bookSourceUrl": "$sourceUrl",
+              "customOrder": $customOrder,
+              "enabled": true,
+              "searchUrl": "${searchBaseUrl}search?q={{key}}&page={{page}}",
+              "ruleSearch": {
+                "bookList": ".result",
+                "name": ".title@text",
+                "author": ".author@text",
+                "bookUrl": ".title@href"
+              },
+              "ruleBookInfo": {
+                "name": "h1@text",
+                "author": ".author@text",
+                "tocUrl": ".toc@href"
+              },
+              "ruleToc": {
+                "chapterList": ".chapter",
+                "chapterName": "text",
+                "chapterUrl": "href"
+              },
+              "ruleContent": {
+                "content": ".content@html"
+              }
+            }
+        """.trimIndent()
     }
 
     private fun enqueueSearchPage(server: MockWebServer) {
@@ -191,6 +298,74 @@ class BookSourceDeviceTest {
         descriptor.close()
     }
 
+    private fun importBookSource(packageName: String, sourceJson: String) {
+        val importUri = "yuedu://booksource/importonline?src=" +
+            URLEncoder.encode(sourceJson, "UTF-8")
+        startActivityByShell(
+            "am start -W -a android.intent.action.VIEW -d $importUri " +
+                "-n $packageName/.ui.source.BookSourceActivity"
+        )
+    }
+
+    private fun startMainActivity() {
+        val instrumentation = InstrumentationRegistry.getInstrumentation()
+        val context = instrumentation.targetContext
+        val intent = Intent(context, MainActivity::class.java).apply {
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+        }
+        instrumentation.runOnMainSync {
+            context.startActivity(intent)
+        }
+        instrumentation.waitForIdleSync()
+        SystemClock.sleep(500)
+    }
+
+    private fun clickVisibleRecyclerItemContaining(recyclerId: Int, text: String) {
+        val clicked = AtomicBoolean(false)
+        runOnCurrentActivity { activity ->
+            val recyclerView = activity.findViewById<RecyclerView>(recyclerId)
+                ?: throw AssertionError("RecyclerView not found: $recyclerId")
+            for (index in 0 until recyclerView.childCount) {
+                val itemView = recyclerView.getChildAt(index)
+                if (containsTextPart(itemView, text)) {
+                    clicked.set(itemView.performClick())
+                    return@runOnCurrentActivity
+                }
+            }
+        }
+        InstrumentationRegistry.getInstrumentation().waitForIdleSync()
+        if (!clicked.get()) {
+            throw AssertionError("Visible RecyclerView item not clicked: $text")
+        }
+    }
+
+    private fun runOnCurrentActivity(block: (Activity) -> Unit) {
+        val instrumentation = InstrumentationRegistry.getInstrumentation()
+        instrumentation.runOnMainSync {
+            val activity = ActivityLifecycleMonitorRegistry.getInstance()
+                .getActivitiesInStage(Stage.RESUMED)
+                .firstOrNull() ?: throw AssertionError("No resumed activity")
+            block(activity)
+        }
+    }
+
+    private fun assertSquareSourceOptions(includedName: String, excludedName: String) {
+        runOnCurrentActivity { activity ->
+            val squareFragment = (activity as MainActivity).supportFragmentManager.fragments
+                .filterIsInstance<SquareFragment>()
+                .firstOrNull() ?: throw AssertionError("SquareFragment not found")
+            val options = squareFragment.viewModel.getSourceOptionsSnapshot()
+            assertTrue(
+                "Expected bookstore source options to include discover source: $includedName",
+                options.any { it.name == includedName && it.canExplore }
+            )
+            assertTrue(
+                "Expected bookstore source options to exclude search-only source: $excludedName",
+                options.none { it.name == excludedName }
+            )
+        }
+    }
+
     private fun performViewClick(): ViewAction = object : ViewAction {
         override fun getConstraints(): Matcher<View> = isDisplayed()
 
@@ -223,9 +398,15 @@ class BookSourceDeviceTest {
             "am start -W -a android.intent.action.MAIN -c android.intent.category.LAUNCHER " +
                 "-n ${context.packageName}/.ui.StartActivity"
         )
-        waitForText("全文阅读")
+        waitForView(R.id.navigation_shelf)
         onView(withId(R.id.navigation_shelf)).perform(performViewClick())
         onView(withId(R.id.tv_source_search)).check(matches(isDisplayed()))
+    }
+
+    private fun waitForView(viewId: Int, timeout: Long = 8000) {
+        waitUntil(timeout) {
+            onView(withId(viewId)).check(matches(isDisplayed()))
+        }
     }
 
     private fun waitForText(matcher: org.hamcrest.Matcher<String>, timeout: Long = 8000) {
@@ -248,10 +429,14 @@ class BookSourceDeviceTest {
 
     private fun tryWaitForRecyclerTextContains(text: String, timeout: Long = 8000): Boolean {
         return kotlin.runCatching {
-            waitUntil(timeout) {
-                onView(withId(R.id.rv_shelf)).perform(scrollUntilTextContaining(text))
-            }
+            waitForRecyclerTextContains(R.id.rv_shelf, text, timeout)
         }.isSuccess
+    }
+
+    private fun waitForRecyclerTextContains(recyclerId: Int, text: String, timeout: Long = 8000) {
+        waitUntil(timeout) {
+            onView(withId(recyclerId)).perform(scrollUntilTextContaining(text))
+        }
     }
 
     private fun searchRealDouluoSourceResults() {

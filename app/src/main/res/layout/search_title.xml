@@ -22,7 +22,7 @@
         android:background="@color/main_color"
         android:drawablePadding="10dp"
         android:gravity="center"
-        android:text="奇幻玄幻"
+        android:text="书源管理"
         android:textColor="@color/white"
         android:textSize="15dp" />
 
@@ -41,7 +41,7 @@
         android:gravity="center"
         android:paddingLeft="10dp"
         android:paddingRight="10dp"
-        android:text="全文阅读网"
+        android:text="书城"
         android:textColor="@color/white"
         android:textSize="17dp" />
 
