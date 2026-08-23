@@ -1,0 +1,51 @@
+schema: spec-driven
+
+context: |
+  Reader 是一个单模块 Android/Kotlin 免费小说阅读器，主模块为 `:app`。
+
+  技术栈：
+  - Kotlin、AndroidX、Coroutines、Flow、ViewModel、LiveData、Room、Hilt、Retrofit、OkHttp、Jsoup、Moshi。
+  - 单元测试使用 JUnit、Robolectric、MockWebServer、Mockito/MockK 相关依赖；设备测试位于 `app/src/androidTest`。
+  - Gradle 入口是 `./gradlew`，项目当前保留单模块结构。
+
+  架构边界：
+  - UI 层位于 `app/src/main/java/com/woodnoisu/reader/ui/**`，负责渲染状态、收集用户输入和展示错误。
+  - ViewModel 负责状态持有、流程编排和用户意图转换。
+  - Repository 负责数据读取、缓存、网络/数据库协调和来源切换。
+  - Room DAO 与数据库定义位于 `persistence`，外部网络和规则解析位于 `network`。
+  - 源管理相关模型、仓库和解析逻辑应保持边界清晰，避免 UI 直接耦合解析细节。
+
+  协作规则：
+  - 新用户可见行为、架构约束或工作流规则变更默认通过 OpenSpec change 规划。
+  - proposal、design、tasks 和 specs 的人类可读正文默认使用简体中文。
+  - capability id、文件夹名、文件路径、命令、包名、API 和代码标识符保留英文稳定形式。
+  - spec 中的 OpenSpec 结构关键字保持英文，包括 ADDED Requirements、MODIFIED Requirements、REMOVED Requirements、Requirement、Scenario、WHEN 和 THEN。
+  - 在已有 dirty worktree 中工作时，只修改本任务需要的文件，不整理或回退无关改动。
+
+  验证规则：
+  - OpenSpec change 更新后运行 `openspec validate <change> --strict`。
+  - 文档或规范变更运行 `git diff --check`。
+  - Kotlin/Android 单元行为变更优先运行 `./gradlew testDebugUnitTest`。
+  - UI、资源、Manifest、DI、Room schema 或启动路径变更按风险补充 `./gradlew assembleDebug`、`./gradlew lintDebug` 或设备验证。
+  - 设备验证必须区分 build、install、cold start、日志观察和真实交互；安装/启动不等于完整功能验证。
+
+rules:
+  proposal:
+    - 正文默认使用简体中文。
+    - 保留模板中的英文结构标题，例如 Why、What Changes、Capabilities 和 Impact。
+    - capability id 使用英文 kebab-case。
+    - 聚焦 why/what，不写逐文件实现细节。
+  design:
+    - 正文默认使用简体中文。
+    - 保留模板中的英文结构标题。
+    - 记录关键决策、默认建议、取舍、风险和实施边界。
+  specs:
+    - 正文默认使用简体中文。
+    - 必须保留 OpenSpec 解析关键字英文：ADDED Requirements、MODIFIED Requirements、REMOVED Requirements、Requirement、Scenario、WHEN、THEN。
+    - Requirement 和 Scenario 名称可用中文。
+    - 每个 Requirement 至少包含一个四级标题 Scenario。
+    - 只记录可验收行为、架构边界和约束，不搬入实现过程。
+  tasks:
+    - 任务描述默认使用简体中文。
+    - 保留 OpenSpec checkbox 格式，例如 "- [ ] 1.1 ..."。
+    - 任务应按依赖顺序排列，并能在一个明确步骤内验证完成。
