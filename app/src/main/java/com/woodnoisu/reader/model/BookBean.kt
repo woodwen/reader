@@ -30,5 +30,8 @@ data class BookBean constructor(@PrimaryKey(autoGenerate = true)
                                         var updateDate: String = "",// 更新时间
                                         var bookFilePath: String = "",// 书籍文件路径
                                 //@Ignore var isLocal: Int = 0,// 是否本地书籍
+                                @Ignore var sourceDisplayName: String = "",// 搜索结果展示用书源名
+                                @Ignore var latestChapter: String = "",// 搜索结果展示用最新章节
+                                @Ignore var wordCountText: String = "",// 搜索结果展示用字数字段
                                 @Ignore var chapters: MutableList<ChapterBean> = ArrayList()// 章节列表(临时使用)
                                 ) : Parcelable

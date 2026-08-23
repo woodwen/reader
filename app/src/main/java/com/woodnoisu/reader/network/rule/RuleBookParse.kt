@@ -54,18 +54,24 @@ class RuleBookParse(
         }
         val name = analyzer.getString(infoRule.name).formatBookName()
         if (name.isBlank()) return null
+        val category = analyzer.getString(infoRule.kind)
+        val latestChapter = analyzer.getString(infoRule.lastChapter)
+        val intro = analyzer.getString(infoRule.intro).formatHtml()
         val tocUrl = analyzer.getString(infoRule.tocUrl, true).ifBlank { bookUrl }
         return BookBean(
             name = name,
             url = bookUrl,
-            category = analyzer.getString(infoRule.kind),
-            status = analyzer.getString(infoRule.lastChapter),
+            category = category,
+            status = inferBookStatus(category, latestChapter, intro),
             cover = analyzer.getString(infoRule.coverUrl, true),
             author = analyzer.getString(infoRule.author).formatBookAuthor(),
-            desc = analyzer.getString(infoRule.intro).formatHtml(),
+            desc = intro,
             shopName = source.bookSourceUrl,
             chaptersUrl = tocUrl,
-            updateDate = analyzer.getString(infoRule.updateTime)
+            updateDate = analyzer.getString(infoRule.updateTime),
+            sourceDisplayName = source.displayName(),
+            latestChapter = latestChapter,
+            wordCountText = analyzer.getString(infoRule.wordCount)
         )
     }
 
@@ -132,17 +138,23 @@ class RuleBookParse(
             val name = itemAnalyzer.getString(rule.name).formatBookName()
             if (name.isBlank()) return@forEach
             val bookUrl = itemAnalyzer.getString(rule.bookUrl, true).ifBlank { baseUrl }
+            val category = itemAnalyzer.getString(rule.kind)
+            val intro = itemAnalyzer.getString(rule.intro).formatHtml()
+            val latestChapter = itemAnalyzer.getString(rule.lastChapter)
             books.add(
                 BookBean(
                     name = name,
                     url = bookUrl,
-                    category = itemAnalyzer.getString(rule.kind),
-                    status = itemAnalyzer.getString(rule.lastChapter),
+                    category = category,
+                    status = inferBookStatus(category, latestChapter, intro),
                     cover = itemAnalyzer.getString(rule.coverUrl, true),
                     author = itemAnalyzer.getString(rule.author).formatBookAuthor(),
-                    desc = itemAnalyzer.getString(rule.intro).formatHtml(),
+                    desc = intro,
                     shopName = source.bookSourceUrl,
-                    updateDate = itemAnalyzer.getString(rule.updateTime)
+                    updateDate = itemAnalyzer.getString(rule.updateTime),
+                    sourceDisplayName = source.displayName(),
+                    latestChapter = latestChapter,
+                    wordCountText = itemAnalyzer.getString(rule.wordCount)
                 )
             )
         }
@@ -163,6 +175,16 @@ class RuleBookParse(
             .replace(Regex("</?[a-zA-Z]+(?=[ >])[^<>]*>"), "")
             .replace(Regex("\\s*\\n+\\s*"), "\n　　")
             .trim()
+    }
+
+    private fun inferBookStatus(vararg texts: String): String {
+        texts.forEach { value ->
+            val text = value.trim()
+            if (text.isBlank()) return@forEach
+            if (text.contains("连载") || text.contains("未完结")) return "连载"
+            if (text.contains("完结") || text.contains("完本") || text.contains("已完结")) return "完结"
+        }
+        return ""
     }
 
     companion object {

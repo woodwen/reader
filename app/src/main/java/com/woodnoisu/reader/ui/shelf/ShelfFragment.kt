@@ -21,7 +21,6 @@ import com.woodnoisu.reader.base.BaseFragment
 import com.woodnoisu.reader.databinding.FragmentShelfBinding
 import com.woodnoisu.reader.model.BookBean
 import com.woodnoisu.reader.ui.novelRead.NovelReadActivity
-import com.woodnoisu.reader.ui.square.SquareAdapter
 import com.woodnoisu.reader.utils.FileUtil
 import com.woodnoisu.reader.utils.showToast
 import dagger.hilt.android.AndroidEntryPoint
@@ -36,7 +35,7 @@ class ShelfFragment: BaseFragment() {
 
     // 书架适配
     private lateinit var adapter: ShelfAdapter
-    private lateinit var sourceAdapter: SquareAdapter
+    private lateinit var sourceAdapter: RemoteSearchAdapter
     private var showingRemote = false
 
     /**
@@ -54,7 +53,7 @@ class ShelfFragment: BaseFragment() {
 
         // 初始化书架适配器
         adapter = ShelfAdapter()
-        sourceAdapter = SquareAdapter()
+        sourceAdapter = RemoteSearchAdapter()
 
         // 初始化管理器
         binding.rvShelf.layoutManager = GridLayoutManager(activity, 3)
@@ -100,7 +99,7 @@ class ShelfFragment: BaseFragment() {
                 viewModel.deleteBook(t)
             }
         }
-        sourceAdapter.itemClickListener = object : SquareAdapter.OnBookItemClickListener {
+        sourceAdapter.itemClickListener = object : RemoteSearchAdapter.OnBookItemClickListener {
             override fun openItem(t: BookBean) {
                 viewModel.fetchBookInfo(t)
             }
@@ -226,7 +225,7 @@ class ShelfFragment: BaseFragment() {
                 viewModel.fetchBook(bookBean)
                 MaterialDialog(requireContext()).show {
                     title(text = bookBean.name)
-                    message(text = "作者：${bookBean.author}\n类别：${bookBean.category}\n状态：${bookBean.status}\n简介：${bookBean.desc}")
+                    message(text = buildBookInfoMessage(bookBean))
                     positiveButton(text = "开始阅读") {
                         val selectedBook = viewModel.getBookBean()
                         if (selectedBook != null) {
@@ -259,6 +258,19 @@ class ShelfFragment: BaseFragment() {
             return
         }
         viewModel.fetchRemoteSearch(keyword)
+    }
+
+    private fun buildBookInfoMessage(bookBean: BookBean): String {
+        val lines = arrayListOf<String>()
+        val sourceName = bookBean.sourceDisplayName.ifBlank { bookBean.shopName }
+        if (sourceName.isNotBlank()) lines.add("来源：$sourceName")
+        lines.add("作者：${bookBean.author.ifBlank { "未知" }}")
+        lines.add("类别：${bookBean.category.ifBlank { "未知" }}")
+        lines.add("状态：${bookBean.status.ifBlank { "未知" }}")
+        if (bookBean.wordCountText.isNotBlank()) lines.add("字数：${bookBean.wordCountText}")
+        if (bookBean.latestChapter.isNotBlank()) lines.add("最新章节：${bookBean.latestChapter}")
+        if (bookBean.desc.isNotBlank()) lines.add("简介：${bookBean.desc}")
+        return lines.joinToString("\n")
     }
 
     private fun showRemoteMode() {

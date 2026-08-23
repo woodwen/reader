@@ -61,6 +61,11 @@ class HtmlClient @Inject constructor(
         }
     }
 
+    suspend fun getSourceDisplayName(shopName: String): String {
+        if (parseMap.containsKey(shopName)) return shopName
+        return bookSourceDao.getBookSource(shopName)?.displayName().orEmpty().ifBlank { shopName }
+    }
+
     /**
      * 获取类型
      */
@@ -74,9 +79,13 @@ class HtmlClient @Inject constructor(
     suspend fun getBookInfo(shopName:String,bookUrl: String): BookBean? {
         val parse = parseMap[shopName]
         if (parse != null) {
-            return parse.getBookInfo(bookUrl)
+            return parse.getBookInfo(bookUrl)?.apply {
+                sourceDisplayName = shopName
+            }
         }
-        return getRuleParse(shopName)?.getBookInfo(bookUrl)
+        return getRuleParse(shopName)?.getBookInfo(bookUrl)?.apply {
+            sourceDisplayName = getSourceDisplayName(shopName)
+        }
     }
 
     /**
@@ -85,10 +94,15 @@ class HtmlClient @Inject constructor(
     suspend fun getSearchByKeyword(shopName:String,keyword: String, page: Int): ResponseSearchPageByKeyword {
         val parse = parseMap[shopName]
         if(parse!=null){
-            return parse.getSearchByKeyword(keyword,page)
+            return parse.getSearchByKeyword(keyword,page).also { response ->
+                response.bookBeans.forEach { it.sourceDisplayName = shopName }
+            }
         }
         getRuleParse(shopName)?.let {
-            return it.getSearchByKeyword(keyword, page)
+            return it.getSearchByKeyword(keyword, page).also { response ->
+                val displayName = getSourceDisplayName(shopName)
+                response.bookBeans.forEach { it.sourceDisplayName = displayName }
+            }
         }
         return ResponseSearchPageByKeyword()
     }

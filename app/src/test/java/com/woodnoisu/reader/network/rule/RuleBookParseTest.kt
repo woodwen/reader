@@ -28,7 +28,9 @@ class RuleBookParseTest {
                       <div class="result">
                         <a class="title" href="/book/1"> 测试小说 </a>
                         <span class="author">作者：张三</span>
-                        <span class="kind">玄幻</span>
+                        <span class="kind">玄幻 连载</span>
+                        <span class="last">第十章 新线索</span>
+                        <span class="words">3200字</span>
                         <img class="cover" src="/cover.jpg" />
                         <p class="intro">搜索简介</p>
                       </div>
@@ -42,8 +44,9 @@ class RuleBookParseTest {
                     <html><body>
                       <h1>测试小说</h1>
                       <span class="author">作者：张三</span>
-                      <span class="kind">玄幻</span>
-                      <span class="last">第一章</span>
+                      <span class="kind">玄幻 完结</span>
+                      <span class="last">最终章</span>
+                      <span class="words">4800字</span>
                       <span class="time">今天</span>
                       <img class="cover" src="/detail-cover.jpg" />
                       <p class="intro">详情简介</p>
@@ -81,11 +84,19 @@ class RuleBookParseTest {
             assertEquals("张三", search.bookBeans[0].author)
             assertEquals("${baseUrl}book/1", search.bookBeans[0].url)
             assertEquals("${baseUrl}cover.jpg", search.bookBeans[0].cover)
+            assertEquals("玄幻 连载", search.bookBeans[0].category)
+            assertEquals("连载", search.bookBeans[0].status)
+            assertEquals("第十章 新线索", search.bookBeans[0].latestChapter)
+            assertEquals("3200字", search.bookBeans[0].wordCountText)
+            assertEquals("测试源", search.bookBeans[0].sourceDisplayName)
 
             val info = parse.getBookInfo(search.bookBeans[0].url)!!
             assertEquals("测试小说", info.name)
             assertEquals("${baseUrl}toc/1", info.chaptersUrl)
             assertEquals("今天", info.updateDate)
+            assertEquals("完结", info.status)
+            assertEquals("最终章", info.latestChapter)
+            assertEquals("4800字", info.wordCountText)
 
             val chapters = parse.getChapterList(info.url, info.chaptersUrl, 0, 10)
             assertEquals(2, chapters.size)
@@ -96,6 +107,44 @@ class RuleBookParseTest {
             val content = parse.getChapterContent(chapters[0].url).orEmpty()
             assertTrue(content.contains("正文第一段"))
             assertTrue(content.contains("正文第二段"))
+        } finally {
+            server.shutdown()
+        }
+    }
+
+    @Test
+    fun parseSearchKeepsMissingOptionalMetadataBlank() = runBlocking {
+        val server = MockWebServer()
+        server.start()
+        try {
+            server.enqueue(
+                MockResponse().setBody(
+                    """
+                    <html><body>
+                      <div class="result">
+                        <a class="title" href="/book/blank">缺字段小说</a>
+                        <span class="author">作者：张三</span>
+                      </div>
+                    </body></html>
+                    """.trimIndent()
+                )
+            )
+
+            val baseUrl = server.url("/").toString()
+            val parse = RuleBookParse(HtmlService(), testSource(baseUrl))
+
+            val search = parse.getSearchByKeyword("缺字段", 1)
+
+            assertEquals(1, search.bookBeans.size)
+            val book = search.bookBeans[0]
+            assertEquals("缺字段小说", book.name)
+            assertEquals("${baseUrl}book/blank", book.url)
+            assertEquals("测试源", book.sourceDisplayName)
+            assertTrue(book.desc.isBlank())
+            assertTrue(book.category.isBlank())
+            assertTrue(book.status.isBlank())
+            assertTrue(book.latestChapter.isBlank())
+            assertTrue(book.wordCountText.isBlank())
         } finally {
             server.shutdown()
         }
@@ -175,6 +224,8 @@ class RuleBookParseTest {
                 author = ".author@text",
                 kind = ".kind@text",
                 intro = ".intro@text",
+                lastChapter = ".last@text",
+                wordCount = ".words@text",
                 coverUrl = ".cover@src",
                 bookUrl = ".title@href"
             ),
@@ -186,6 +237,7 @@ class RuleBookParseTest {
                 coverUrl = ".cover@src",
                 lastChapter = ".last@text",
                 updateTime = ".time@text",
+                wordCount = ".words@text",
                 tocUrl = ".toc@href"
             ),
             ruleToc = TocRule(

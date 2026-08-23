@@ -156,6 +156,9 @@ class ShelfRepository @Inject constructor(
                                     LogUtil.e(TAG, "书架远程书源搜索超时或失败：${source.name}")
                                 }
                                 response?.bookBeans?.forEach { book ->
+                                    if (book.sourceDisplayName.isBlank()) {
+                                        book.sourceDisplayName = source.name
+                                    }
                                     bookMap["${book.shopName}|${book.url}"] = book
                                 }
                                 if (bookMap.isNotEmpty()) {
@@ -205,14 +208,19 @@ class ShelfRepository @Inject constructor(
                 onError("获取失败，书籍链接为空")
                 return@flow
             }
+            val sourceDisplayName = htmlClient.getSourceDisplayName(request.shopName)
             val book = bookDao.getByFavoriteAndUrl(request.bookUrl)
             if (book != null) {
+                book.sourceDisplayName = sourceDisplayName
                 emit(ResponseBookInfo(book))
                 onSuccess("获取书籍信息成功")
                 return@flow
             }
             val remoteBook = htmlClient.getBookInfo(request.shopName, request.bookUrl)
             if (remoteBook != null && remoteBook.name.isNotBlank() && remoteBook.url.isNotBlank()) {
+                if (remoteBook.sourceDisplayName.isBlank()) {
+                    remoteBook.sourceDisplayName = sourceDisplayName
+                }
                 val temp = bookDao.getByUrl(remoteBook.url)
                 if (temp != null) {
                     remoteBook.id = temp.id

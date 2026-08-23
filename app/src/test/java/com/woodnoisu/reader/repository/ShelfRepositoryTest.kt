@@ -31,10 +31,10 @@ class ShelfRepositoryTest {
             override fun dispatch(request: RecordedRequest): MockResponse {
                 return when {
                     request.path?.startsWith("/one/search") == true -> MockResponse().setBody(
-                        searchHtml("第一本", "作者一", "/one/book/1")
+                        searchHtml("第一本", "作者一", "/one/book/1", "玄幻 连载", "第十章", "3200字")
                     )
                     request.path?.startsWith("/two/search") == true -> MockResponse().setBody(
-                        searchHtml("第二本", "作者二", "/two/book/1")
+                        searchHtml("第二本", "作者二", "/two/book/1", "都市 完结", "最终章", "4100字")
                     )
                     else -> MockResponse().setResponseCode(404)
                 }
@@ -72,18 +72,35 @@ class ShelfRepositoryTest {
             assertEquals(2, response.bookBeans.size)
             assertEquals(listOf("第一本", "第二本"), response.bookBeans.map { it.name }.sorted())
             assertEquals(setOf(sourceOne.bookSourceUrl, sourceTwo.bookSourceUrl), response.bookBeans.map { it.shopName }.toSet())
+            val firstBook = response.bookBeans.first { it.name == "第一本" }
+            assertEquals(sourceOne.bookSourceUrl, firstBook.shopName)
+            assertEquals("源一", firstBook.sourceDisplayName)
+            assertEquals("玄幻 连载", firstBook.category)
+            assertEquals("连载", firstBook.status)
+            assertEquals("第十章", firstBook.latestChapter)
+            assertEquals("3200字", firstBook.wordCountText)
             assertTrue(errors.isEmpty())
         } finally {
             server.shutdown()
         }
     }
 
-    private fun searchHtml(name: String, author: String, bookUrl: String): String {
+    private fun searchHtml(
+        name: String,
+        author: String,
+        bookUrl: String,
+        kind: String,
+        lastChapter: String,
+        wordCount: String
+    ): String {
         return """
             <html><body>
               <div class="result">
                 <a class="title" href="$bookUrl">$name</a>
                 <span class="author">$author</span>
+                <span class="kind">$kind</span>
+                <span class="last">$lastChapter</span>
+                <span class="words">$wordCount</span>
                 <p class="intro">简介</p>
               </div>
             </body></html>
@@ -101,6 +118,9 @@ class ShelfRepositoryTest {
                 name = ".title@text",
                 author = ".author@text",
                 intro = ".intro@text",
+                kind = ".kind@text",
+                lastChapter = ".last@text",
+                wordCount = ".words@text",
                 bookUrl = ".title@href"
             ),
             ruleBookInfo = BookInfoRule(
