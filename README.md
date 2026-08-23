@@ -1,131 +1,131 @@
-# reader
-免费小说阅读App
+# Reader
 
-说明
+Reader 是一个单模块 Android/Kotlin 免费小说阅读器，主模块为 `:app`，Gradle 入口为 `./gradlew`。应用包名为 `com.woodnoisu.reader`，当前仓库配置的版本为 `1.0.2`。
 
-使用多模块版本的编译成apk安装后发现不能运行（调试不影响），然后小弟也去尝试了官方demo的编译安装使用，也是同样的问题，所以先把主分支切为单模块版本的
+项目保留单模块结构，主要围绕书城、书架、本地阅读、在线阅读和书源管理展开。仓库内的 OpenSpec artifacts 用于规划较大的用户可见行为、架构约束和协作规则变更。
 
+## 当前功能
 
-参考项目
+- 书城：保留固定书源入口，当前代码包含“全文阅读”和“笔趣阁”解析实现，支持分类、搜索、简介、订阅和在线阅读。
+- 书源管理：支持书源列表、启停、编辑、删除、二维码导入和 `yuedu://booksource/importonline` 在线导入路径；动态书源接入搜索和阅读链路。
+- 书架：支持本地书架展示、取消订阅、书架内过滤搜索、本地 `.txt` 书籍订阅和本地阅读。
+- 书架远程搜索：支持“搜书源”聚合已启用书源，并在远程结果中展示来源、分类、连载状态、最新章节、简介和书源提供的字数字段。
+- 阅读器：支持目录、亮度、日夜模式、缓存、字体、字号、翻页模式、背景和书签相关交互。
+- 个人配置：包含缓存清理、跳转 GitHub 和书源管理入口。
 
-1.Pokedex 单项目 mvvm，flow [Pokedex](https://github.com/skydoves/Pokedex)
+## 技术栈
 
-2.NovelReader 基于"任阅"的改进追书App [NovelReader](https://github.com/newbiechen1024/NovelReader)
+- Android 单模块应用：`:app`
+- Kotlin `1.7.22`
+- Android Gradle Plugin `7.4.2`
+- Gradle Wrapper `7.6.1`
+- SDK：`minSdk 21`，`compileSdk 31`，`targetSdk 30`
+- AndroidX、ViewModel、LiveData、Room、Hilt、Coroutines、Flow
+- Retrofit、OkHttp、Jsoup、Moshi、Gson、JsonPath
+- ZXing Lite、Glide、Coil、Paging、DocumentFile
+- 单元测试依赖包含 JUnit、Robolectric、MockWebServer、Mockito、Turbine
 
-3.FreeNovel 基于kotlin的免费Android小说应用[FreeNovel](https://github.com/lxygithub/FreeNovel) 
+## 目录结构
 
-4.OKBook kotlin + 协程 + MVVM 模式来编写的看小说APP [OKBook](https://gitee.com/xcode_xiao/OKBook)
+```text
+.
+├── app/                         # Android 主模块
+│   └── src/
+│       ├── main/java/com/woodnoisu/reader/
+│       │   ├── ui/              # Activity/Fragment/Adapter/ViewModel
+│       │   ├── repository/      # 数据读取、缓存、网络/数据库协调
+│       │   ├── persistence/     # Room database 和 DAO
+│       │   ├── network/         # 固定书源、动态规则解析和网络请求
+│       │   └── model/           # 业务模型和书源规则模型
+│       ├── test/                # JVM 单元测试
+│       └── androidTest/         # 设备/仪器测试
+├── openspec/                    # OpenSpec 配置、active changes 和 specs
+├── screenshot/                  # 当前仓库可见的架构图资源
+├── AGENTS.md                    # Agent 协作规则
+├── CHANGELOG.md                 # 可确认变更记录
+├── dependencies.gradle          # 版本号和依赖版本集中配置
+├── build.gradle
+├── settings.gradle
+└── README.md
+```
 
-# 最新应用下载地址
-[reader_v1.0.2](https://raw.githubusercontent.com/woodwen/reader/main/apk/reader_v1.0.2.apk)
+## 本地环境
 
-# 应用展示
+建议使用 Android Studio 或命令行 Gradle 构建。当前仓库的 legacy Android/Gradle 基线建议使用 JDK 11；如果使用较新的 Android Studio bundled JDK 遇到 KAPT 或旧工具链错误，优先把 Gradle JDK 切回 JDK 11。
 
-![](https://github.com/woodwen/reader/blob/main/screenshot/1.jpeg)
-![](https://github.com/woodwen/reader/blob/main/screenshot/2.jpeg)
-![](https://github.com/woodwen/reader/blob/main/screenshot/3.jpeg)
-![](https://github.com/woodwen/reader/blob/main/screenshot/4.jpeg)
-![](https://github.com/woodwen/reader/blob/main/screenshot/5.jpeg)
-![](https://github.com/woodwen/reader/blob/main/screenshot/6.jpeg)
+确认本地 Android SDK 至少包含 `compileSdk 31`。如果从旧的多模块分支或其它工作区切换过来，先确认没有残留的 `buildSrc/`、`feature*/`、`library*/` 或旧 `build/` 目录影响当前单模块构建。
 
+## 常用命令
 
-# 应用简介
+```bash
+# 构建 debug APK
+./gradlew :app:assembleDebug
 
-小说阅读器（模块化开发/单项目开发，基于Kotlin+MVVM+Kodein/Hilt+Retrofit+Jsoup+Moshi+Coroutines+Flow+Jetpack+Coil+Room+Mockk等架构实现），用kotlin重写了“任阅”的阅读模块代码，优化，代码逻辑，降低内存使用率。
+# 运行 JVM 单元测试
+./gradlew :app:testDebugUnitTest
 
-目前已有功能：
+# 运行 lint
+./gradlew :app:lintDebug
+```
 
-1.书城
+OpenSpec 和文档类变更常用检查：
 
-  * 支持书城切换（目前支持，全文阅读网，笔趣阁）。
-  * 支持小说分类切换。
-  * 支持按书名，作者搜索小说。
-  * 支持查看小说简介。
-  * 支持小说订阅
-  * 支持直接在线阅读
-  
-2.书架
-  
-   * 支持取消订阅
-   * 支持搜索书架
-   * 支持订阅本地书籍（目前只支持.txt）
-   * 支持本地阅读
-    
-3.个人配置
-  
-  * 清理缓存
-  * 跳转github
-  
-4.阅读
+```bash
+openspec validate <change-id> --strict
+openspec validate --all --strict
+git diff --check
+```
 
-  * 目录（小说目录）
-  * 亮度（设置阅读器亮度，日/夜模式）
-  * 缓存（下载小说到本地）
-  * 设置（字体，字号，翻页模式，背景图片）
+设备验证需要单独说明执行范围。安装成功、冷启动成功和日志无崩溃不等于已经验证完整交互流程；涉及 UI、资源、Manifest、DI、Room schema 或启动路径时，应按风险补充真实设备检查。
 
-准备加入但是目前还没的功能：
+## OpenSpec 工作流
 
-	1.隐藏书城
-	2.尝试支持厚墨源
-	3.书城不再是写死的方式，而是类似于厚墨的安装方式
-	4.支持语音朗读
+较大的用户可见行为、架构约束或协作规则变更默认通过 `openspec/changes/<change-id>/` 规划。常见流程：
 
-**注: 该项目不定时维护更新，如有侵权的地方，请告知小弟，立马删除**
+- 先出方案：创建或更新 `proposal.md`、`design.md`、`tasks.md` 和 `specs/**/spec.md`，不改实现代码。
+- 实施方案：按 `tasks.md` 顺序实施，保持任务勾选和实际验证一致。
+- review：同时检查 OpenSpec artifacts、当前 diff、架构边界、测试和文档。
+- 完成提交/归档：只在明确要求时执行，不默认提交、不 push、不 archive。
 
-# 以下为框架相关（开辟了两个分支，一个是单项目的，一个是模块化的）
+## APK 下载
 
-   [单模块版本](https://github.com/woodwen/reader/tree/dev-single)
+现有 APK 下载链接沿用原 README：
 
-   [多模块版本](https://github.com/woodwen/reader/tree/dev-multiple)
+- [reader_v1.0.2](https://raw.githubusercontent.com/woodwen/reader/main/apk/reader_v1.0.2.apk)
 
+当前仓库未发现本地 `apk/` 目录，本次文档更新未验证该外链是否为最新发布版本，因此不把它称为“最新应用下载地址”。
 
-# 可能遇到的编译问题
+## 应用展示
 
-如果是从多项目版本切换过来的，会在单项目版本中多很多多余的文件夹（buildSrc文件夹，feature系列文件夹，library系列文件夹，各种build文件夹），删除后再编译
+以下应用截图链接沿用原 README 的远程地址，当前仓库本地未发现对应 `1.jpeg` 到 `6.jpeg` 文件：
 
-# 以下为框架相关
+![screenshot 1](https://github.com/woodwen/reader/blob/main/screenshot/1.jpeg)
+![screenshot 2](https://github.com/woodwen/reader/blob/main/screenshot/2.jpeg)
+![screenshot 3](https://github.com/woodwen/reader/blob/main/screenshot/3.jpeg)
+![screenshot 4](https://github.com/woodwen/reader/blob/main/screenshot/4.jpeg)
+![screenshot 5](https://github.com/woodwen/reader/blob/main/screenshot/5.jpeg)
+![screenshot 6](https://github.com/woodwen/reader/blob/main/screenshot/6.jpeg)
 
-# 项目特点
+架构图：
 
-	* 基于现代Android应用程序技术堆栈和MVVM架构的小型应用程序。
-	* 该项目的重点是实现依赖注入的新库Hilt。
-	* 还可以从网络中获取数据，并通过存储库模式将持久性数据集成到数据库中
+![MVVM 架构图](screenshot/mvvm.png)
 
-# 技术栈
+## 参考项目
 
-   	• 最低SDK级别21
+- [Pokedex](https://github.com/skydoves/Pokedex)：单项目 MVVM、Flow 参考。
+- [NovelReader](https://github.com/newbiechen1024/NovelReader)：基于“任阅”的改进追书 App。
+- [FreeNovel](https://github.com/lxygithub/FreeNovel)：基于 Kotlin 的免费 Android 小说应用。
+- [OKBook](https://gitee.com/xcode_xiao/OKBook)：Kotlin、协程、MVVM 小说阅读 App。
 
-   	• 基于Kotlin，Coroutines + Flow用于异步。
+## 历史说明
 
-   	• Hilt（alpha）用于依赖项注入。
+原 README 提到曾经维护单模块和多模块两个分支。当前仓库以单模块 `:app` 为准，不主动拆模块：
 
-	• JetPack
-	   	○ LiveData-将域层数据通知视图。
-	   	○ Lifecycle-当生命周期状态改变时，丢弃观察数据。
-	   	○ ViewModel-与UI相关的数据持有者，具有生命周期意识。
-	   	○ Room Persistence-使用抽象层构建数据库。
+- [单模块版本](https://github.com/woodwen/reader/tree/dev-single)
+- [多模块版本](https://github.com/woodwen/reader/tree/dev-multiple)
 
-   	• 结构
-	   	○ MVVM体系结构（视图-数据绑定-ViewModel-模型）
-	   	○ 储存库模式
+原 README 中的部分“准备加入”方向属于历史计划，例如隐藏书城、语音朗读等。后续如果要继续推进，应先通过 OpenSpec change 明确范围、验收标准和验证计划。
 
-   	• Retrofit2和OkHttp3-构造REST API和分页网络数据。
+## 免责声明
 
-   	• Moshi -Kotlin和Java的现代JSON库。
-
-   	• Coil -使用Kotlin惯用API的图像加载库
-
-   	• Bundler -Android Intent和Bundle扩展，可优雅地插入和检索值。
-
-   	• Material-Components-材质设计组件，例如波纹动画，cardView。
-
-   	• 自定义视图
-		○ Rainbow-适用于Android的渐变和着色的简单方法。
-	   	○ AndroidRibbon-一种在Android上通过闪烁实现漂亮的功能区的简单方法。
-	   	○ ProgressView-优美灵活的ProgressView，可完全通过动画进行自定义。
-
-# 架构
-
-   基于MVVM体系结构和存储库模式
-   
-   ![](https://github.com/woodwen/reader/blob/main/screenshot/mvvm.png)
+该项目不定时维护更新。项目涉及的小说内容来自外部站点或用户配置书源，如有侵权内容，请联系删除。
