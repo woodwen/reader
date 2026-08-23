@@ -6,6 +6,7 @@ import androidx.lifecycle.switchMap
 import androidx.lifecycle.viewModelScope
 import com.woodnoisu.reader.base.BaseViewModel
 import com.woodnoisu.reader.model.source.BookSource
+import com.woodnoisu.reader.repository.source.BookSourceImportResult
 import com.woodnoisu.reader.repository.source.BookSourceRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
@@ -21,8 +22,8 @@ class BookSourceViewModel @Inject constructor(
         repository.liveData(it)
     }
 
-    private val _importResult = MutableLiveData<Int>()
-    val importResult: LiveData<Int> get() = _importResult
+    private val _importResult = MutableLiveData<BookSourceImportResult>()
+    val importResult: LiveData<BookSourceImportResult> get() = _importResult
 
     fun search(key: String) {
         searchKey.value = key
@@ -59,6 +60,10 @@ class BookSourceViewModel @Inject constructor(
         viewModelScope.launch(Dispatchers.IO) {
             kotlin.runCatching {
                 repository.updateEnabled(source, enabled)
+            }.onSuccess {
+                if (enabled && !it) {
+                    _toast.postValue("书源不可用，已保持禁用")
+                }
             }.onFailure {
                 _toast.postValue(it.localizedMessage ?: "更新失败")
             }

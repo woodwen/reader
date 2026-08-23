@@ -5,6 +5,7 @@ import com.woodnoisu.reader.model.ChapterBean
 import com.woodnoisu.reader.model.ResponseSearchPageByKeyword
 import com.woodnoisu.reader.model.ResponseSearchPageByType
 import com.woodnoisu.reader.model.source.BookSource
+import com.woodnoisu.reader.model.source.rule.BookListRule
 import com.woodnoisu.reader.network.HtmlService
 import com.woodnoisu.reader.network.parse.HtmlParse
 
@@ -13,7 +14,11 @@ class RuleBookParse(
     private val source: BookSource
 ) : HtmlParse(htmlService) {
 
-    override val typeMap: Map<String, String> = emptyMap()
+    override val typeMap: Map<String, String> = if (source.supportsExplore()) {
+        mapOf(TYPE_EXPLORE to source.exploreUrl.orEmpty())
+    } else {
+        emptyMap()
+    }
 
     override suspend fun getSearchByKeyword(keyword: String, page: Int): ResponseSearchPageByKeyword {
         val searchUrl = source.searchUrl
@@ -23,30 +28,20 @@ class RuleBookParse(
         }
         val urlRule = SourceUrlRule(searchUrl, keyword, page, source.bookSourceUrl, source)
         val body = urlRule.load(htmlService) ?: return ResponseSearchPageByKeyword(keyword, 0, 0, books)
-        val rule = source.getSearchRule()
-        val analyzer = SourceRuleAnalyzer(body, urlRule.url, urlRule.url)
-        analyzer.getElements(rule.bookList).forEach { item ->
-            val itemAnalyzer = SourceRuleAnalyzer(item, urlRule.url, urlRule.url)
-            val name = itemAnalyzer.getString(rule.name).formatBookName()
-            if (name.isBlank()) return@forEach
-            val bookUrl = itemAnalyzer.getString(rule.bookUrl, true).ifBlank { urlRule.url }
-            books.add(
-                BookBean(
-                    name = name,
-                    url = bookUrl,
-                    category = itemAnalyzer.getString(rule.kind),
-                    cover = itemAnalyzer.getString(rule.coverUrl, true),
-                    author = itemAnalyzer.getString(rule.author).formatBookAuthor(),
-                    desc = itemAnalyzer.getString(rule.intro).formatHtml(),
-                    shopName = source.bookSourceUrl
-                )
-            )
-        }
+        books.addAll(parseBookList(body, urlRule.url, source.getSearchRule()))
         return ResponseSearchPageByKeyword(keyword, page, page, books)
     }
 
     override suspend fun getSearchByType(typeName: String, page: Int): ResponseSearchPageByType {
-        return ResponseSearchPageByType(typeName, page, page, arrayListOf())
+        val books = arrayListOf<BookBean>()
+        val exploreUrl = source.exploreUrl
+        if (exploreUrl.isNullOrBlank() || !source.supportsExplore()) {
+            return ResponseSearchPageByType(typeName, page, page, books)
+        }
+        val urlRule = SourceUrlRule(exploreUrl, page = page, baseUrl = source.bookSourceUrl, source = source)
+        val body = urlRule.load(htmlService) ?: return ResponseSearchPageByType(typeName, 0, 0, books)
+        books.addAll(parseBookList(body, urlRule.url, source.getExploreRule()))
+        return ResponseSearchPageByType(typeName, page, page, books)
     }
 
     override suspend fun getBookInfo(bookUrl: String): BookBean? {
@@ -58,6 +53,7 @@ class RuleBookParse(
             analyzer.getElement(it)?.let { element -> analyzer.setContent(element) }
         }
         val name = analyzer.getString(infoRule.name).formatBookName()
+        if (name.isBlank()) return null
         val tocUrl = analyzer.getString(infoRule.tocUrl, true).ifBlank { bookUrl }
         return BookBean(
             name = name,
@@ -124,6 +120,35 @@ class RuleBookParse(
         }
     }
 
+    private fun parseBookList(
+        body: String,
+        baseUrl: String,
+        rule: BookListRule
+    ): ArrayList<BookBean> {
+        val books = arrayListOf<BookBean>()
+        val analyzer = SourceRuleAnalyzer(body, baseUrl, baseUrl)
+        analyzer.getElements(rule.bookList).forEach { item ->
+            val itemAnalyzer = SourceRuleAnalyzer(item, baseUrl, baseUrl)
+            val name = itemAnalyzer.getString(rule.name).formatBookName()
+            if (name.isBlank()) return@forEach
+            val bookUrl = itemAnalyzer.getString(rule.bookUrl, true).ifBlank { baseUrl }
+            books.add(
+                BookBean(
+                    name = name,
+                    url = bookUrl,
+                    category = itemAnalyzer.getString(rule.kind),
+                    status = itemAnalyzer.getString(rule.lastChapter),
+                    cover = itemAnalyzer.getString(rule.coverUrl, true),
+                    author = itemAnalyzer.getString(rule.author).formatBookAuthor(),
+                    desc = itemAnalyzer.getString(rule.intro).formatHtml(),
+                    shopName = source.bookSourceUrl,
+                    updateDate = itemAnalyzer.getString(rule.updateTime)
+                )
+            )
+        }
+        return books
+    }
+
     private fun String?.formatBookName(): String =
         this.orEmpty().replace(Regex("\\s+作\\s*者.*"), "").trim()
 
@@ -138,5 +163,9 @@ class RuleBookParse(
             .replace(Regex("</?[a-zA-Z]+(?=[ >])[^<>]*>"), "")
             .replace(Regex("\\s*\\n+\\s*"), "\n　　")
             .trim()
+    }
+
+    companion object {
+        const val TYPE_EXPLORE = "发现"
     }
 }

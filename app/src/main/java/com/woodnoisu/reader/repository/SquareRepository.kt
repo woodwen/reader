@@ -149,7 +149,7 @@ class SquareRepository @Inject constructor(
                 } else {
                     //数据库获取失败，从网络获取
                     val remoteBook = htmlClient.getBookInfo(shopName, bookUrl)
-                    if (remoteBook != null) {
+                    if (remoteBook != null && remoteBook.name.isNotBlank() && remoteBook.url.isNotBlank()) {
                         // 如果获取成功则缓存到数据库
                         val temp = bookDao.getByUrl(remoteBook.url)
                         if (temp != null) {

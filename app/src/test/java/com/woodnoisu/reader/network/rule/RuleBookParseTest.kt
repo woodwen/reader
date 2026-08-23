@@ -3,6 +3,7 @@ package com.woodnoisu.reader.network.rule
 import com.woodnoisu.reader.model.source.BookSource
 import com.woodnoisu.reader.model.source.rule.BookInfoRule
 import com.woodnoisu.reader.model.source.rule.ContentRule
+import com.woodnoisu.reader.model.source.rule.ExploreRule
 import com.woodnoisu.reader.model.source.rule.SearchRule
 import com.woodnoisu.reader.model.source.rule.TocRule
 import com.woodnoisu.reader.network.HtmlService
@@ -98,6 +99,69 @@ class RuleBookParseTest {
         } finally {
             server.shutdown()
         }
+    }
+
+    @Test
+    fun parseExploreFromHtml() = runBlocking {
+        val server = MockWebServer()
+        server.start()
+        try {
+            server.enqueue(
+                MockResponse().setBody(
+                    """
+                    <html><body>
+                      <div class="result">
+                        <a class="title" href="/book/explore">发现小说</a>
+                        <span class="author">作者：李四</span>
+                        <span class="kind">都市</span>
+                        <p class="intro">发现简介</p>
+                      </div>
+                    </body></html>
+                    """.trimIndent()
+                )
+            )
+
+            val baseUrl = server.url("/").toString()
+            val parse = RuleBookParse(
+                HtmlService(),
+                testSource(baseUrl).copy(
+                    exploreUrl = "${baseUrl}explore?page={{page}}",
+                    ruleExplore = ExploreRule(
+                        bookList = ".result",
+                        name = ".title@text",
+                        author = ".author@text",
+                        kind = ".kind@text",
+                        intro = ".intro@text",
+                        bookUrl = ".title@href"
+                    )
+                )
+            )
+
+            val explore = parse.getSearchByType(RuleBookParse.TYPE_EXPLORE, 1)
+
+            assertEquals(1, explore.bookBeans.size)
+            assertEquals("发现小说", explore.bookBeans[0].name)
+            assertEquals("李四", explore.bookBeans[0].author)
+            assertEquals("${baseUrl}book/explore", explore.bookBeans[0].url)
+        } finally {
+            server.shutdown()
+        }
+    }
+
+    @Test
+    fun sourceRuleAnalyzerSupportsCssPrefix() {
+        val analyzer = SourceRuleAnalyzer(
+            """
+            <html><body>
+              <a class="title" href="/book/1">测试小说</a>
+            </body></html>
+            """.trimIndent(),
+            "https://example.com/"
+        )
+
+        assertEquals("测试小说", analyzer.getString("css:.title@text"))
+        assertEquals("https://example.com/book/1", analyzer.getString("css:.title@href", true))
+        assertEquals("测试小说", analyzer.getString("@CSS:css:.title@text"))
     }
 
     private fun testSource(baseUrl: String): BookSource {

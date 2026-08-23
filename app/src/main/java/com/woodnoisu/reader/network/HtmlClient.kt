@@ -27,12 +27,37 @@ class HtmlClient @Inject constructor(
     }
 
     fun getFixedSourceOptions(): List<SourceOption> {
-        return parseMap.keys.map { SourceOption(it, it, false) }
+        return parseMap.keys.map {
+            SourceOption(
+                key = it,
+                name = it,
+                dynamic = false,
+                canExplore = true
+            )
+        }
     }
 
     suspend fun getSourceOptions(): List<SourceOption> {
-        return getFixedSourceOptions() + bookSourceDao.getAllEnabled().map {
-            SourceOption(it.bookSourceUrl, it.displayName(), true)
+        return getFixedSourceOptions() + bookSourceDao.getAllEnabled()
+            .filter { it.supportsSearch() || it.supportsExplore() }
+            .map {
+                SourceOption(
+                    key = it.bookSourceUrl,
+                    name = it.displayName(),
+                    dynamic = true,
+                    canExplore = it.supportsExplore()
+                )
+            }
+    }
+
+    suspend fun getDynamicSearchSourceOptions(): List<SourceOption> {
+        return bookSourceDao.getAllEnabled().filter { it.supportsReadableSearch() }.map {
+            SourceOption(
+                key = it.bookSourceUrl,
+                name = it.displayName(),
+                dynamic = true,
+                canExplore = it.supportsExplore()
+            )
         }
     }
 

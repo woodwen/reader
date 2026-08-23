@@ -30,12 +30,13 @@ object RepositoryModule {
     @Provides
     @ActivityRetainedScoped
     fun provideShelfRepository(
+        htmlClient: HtmlClient,
         bookDao: BookDao,
         bookSignDao: BookSignDao,
         chapterDao: ChapterDao,
         readRecordDao: ReadRecordDao
     ): ShelfRepository {
-        return ShelfRepository(bookDao, bookSignDao, chapterDao, readRecordDao)
+        return ShelfRepository(htmlClient, bookDao, bookSignDao, chapterDao, readRecordDao)
     }
 
     @Provides

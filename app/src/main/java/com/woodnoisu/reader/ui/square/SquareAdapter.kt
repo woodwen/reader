@@ -88,7 +88,14 @@ class SquareAdapter: RecyclerView.Adapter<SquareAdapter.ViewHolder>() {
         holder.tvName.text = bookModel.name
         holder.tvAuthor.text = "作者：" + bookModel.author
         holder.tvDesc.text = bookModel.desc
-        holder.ivCover.load(bookModel.cover)
+        if (bookModel.cover.isBlank()) {
+            holder.ivCover.setImageResource(R.drawable.pic_placeholder)
+        } else {
+            holder.ivCover.load(bookModel.cover) {
+                placeholder(R.drawable.pic_placeholder)
+                error(R.drawable.pic_placeholder)
+            }
+        }
         holder.itemView.setOnClickListener {
             itemClickListener?.openItem(bookModel)
         }

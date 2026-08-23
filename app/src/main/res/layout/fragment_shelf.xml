@@ -33,9 +33,20 @@
             android:drawableStart="@drawable/search_icon"
             android:drawablePadding="5dp"
             android:hint="搜索书架内容"
+            android:imeOptions="actionSearch"
             android:padding="5dp"
+            android:singleLine="true"
             android:textColor="@color/black_text"
             android:textSize="14dp" />
+
+        <TextView
+            android:id="@+id/tv_source_search"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginRight="16dp"
+            android:text="搜书源"
+            android:textColor="@color/main_color"
+            android:textSize="16dp" />
 
         <TextView
             android:id="@+id/tv_complete"

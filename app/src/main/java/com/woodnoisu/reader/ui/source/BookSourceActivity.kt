@@ -69,7 +69,12 @@ class BookSourceActivity : BaseActivity(), BookSourceAdapter.Callback {
             if (!it.isNullOrBlank()) Toast.makeText(this, it, Toast.LENGTH_SHORT).show()
         }
         viewModel.importResult.observe(this) {
-            Toast.makeText(this, "导入 $it 个书源", Toast.LENGTH_SHORT).show()
+            val message = if (it.unavailable > 0) {
+                "导入 ${it.total} 个书源，${it.unavailable} 个不可用已禁用"
+            } else {
+                "导入 ${it.total} 个书源"
+            }
+            Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
         }
     }
 

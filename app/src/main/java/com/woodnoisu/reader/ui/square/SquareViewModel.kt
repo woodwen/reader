@@ -30,6 +30,7 @@ class SquareViewModel @Inject constructor(
     private val _shopName: MutableLiveData<String> = MutableLiveData()
     private val _shopTitle: MutableLiveData<String> = MutableLiveData()
     private val _shopDynamic: MutableLiveData<Boolean> = MutableLiveData()
+    private val _shopExplore: MutableLiveData<Boolean> = MutableLiveData()
     private val _book: MutableLiveData<BookBean> = MutableLiveData()
     //private val _remoteBookList: MutableLiveData<ArrayList<BookBean>> = MutableLiveData()
     private val _currentPage: MutableLiveData<Int> = MutableLiveData()
@@ -158,7 +159,7 @@ class SquareViewModel @Inject constructor(
 
         if (keyword.isNotBlank()) {
             fetchSearchKeyWord(keyword, p)
-        } else if (isDynamicSource()) {
+        } else if (isDynamicSource() && !canExplore()) {
             _squareMessage.value = "动态书源请先输入书名或作者搜索"
             _toast.value = "动态书源请先搜索"
         } else {
@@ -233,6 +234,9 @@ class SquareViewModel @Inject constructor(
 
     @MainThread
     fun getTypes():List<String>{
+        if (isDynamicSource()) {
+            return if (canExplore()) listOf("发现") else listOf("仅搜索")
+        }
         return squareRepository.getTypes(getShopName())
     }
 
@@ -243,6 +247,9 @@ class SquareViewModel @Inject constructor(
 
     @MainThread
     fun isDynamicSource(): Boolean = _shopDynamic.value == true
+
+    @MainThread
+    fun canExplore(): Boolean = _shopExplore.value == true
 
     @MainThread
     fun isLastPage():Boolean {
@@ -276,6 +283,7 @@ class SquareViewModel @Inject constructor(
         _shopName.value=shopName
         _shopTitle.value = shopName
         _shopDynamic.value = false
+        _shopExplore.value = true
     }
 
     @MainThread
@@ -283,6 +291,7 @@ class SquareViewModel @Inject constructor(
         _shopName.value = sourceOption.key
         _shopTitle.value = sourceOption.name
         _shopDynamic.value = sourceOption.dynamic
+        _shopExplore.value = sourceOption.canExplore
     }
 
     @MainThread
@@ -296,10 +305,13 @@ class SquareViewModel @Inject constructor(
     }
 
     @MainThread
-    fun selectDefaultSourceIfNeeded(options: List<SourceOption>) {
-        if (!hasShopName() && options.isNotEmpty()) {
+    fun selectDefaultSourceIfNeeded(options: List<SourceOption>): Boolean {
+        val shopName = _shopName.value
+        if (options.isNotEmpty() && (shopName.isNullOrBlank() || options.none { it.key == shopName })) {
             fetchShopOption(options[0])
+            return true
         }
+        return false
     }
 
     @MainThread

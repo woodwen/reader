@@ -49,6 +49,41 @@ data class BookSource(
 
     fun displayName(): String = bookSourceName.ifBlank { bookSourceUrl }
 
+    fun supportsSearch(): Boolean =
+        !searchUrl.isNullOrBlank() && !getSearchRule().bookList.isNullOrBlank()
+
+    fun supportsReadableSearch(): Boolean =
+        supportsSearch() &&
+            isSupportedReadRule(getSearchRule().bookList) &&
+            isSupportedReadRule(getSearchRule().name) &&
+            isSupportedReadRule(getSearchRule().author) &&
+            isSupportedReadRule(getSearchRule().intro) &&
+            isSupportedReadRule(getSearchRule().kind) &&
+            isSupportedReadRule(getSearchRule().lastChapter) &&
+            isSupportedReadRule(getSearchRule().updateTime) &&
+            isSupportedReadRule(getSearchRule().bookUrl) &&
+            isSupportedReadRule(getSearchRule().coverUrl) &&
+            !getSearchRule().name.isNullOrBlank() &&
+            !getSearchRule().bookUrl.isNullOrBlank() &&
+            !getBookInfoRule().name.isNullOrBlank() &&
+            !getTocRule().chapterList.isNullOrBlank() &&
+            !getTocRule().chapterName.isNullOrBlank() &&
+            !getTocRule().chapterUrl.isNullOrBlank() &&
+            !getContentRule().content.isNullOrBlank() &&
+            isSupportedReadRule(getBookInfoRule().init) &&
+            isSupportedReadRule(getBookInfoRule().name) &&
+            isSupportedReadRule(getBookInfoRule().tocUrl) &&
+            isSupportedReadRule(getTocRule().chapterList) &&
+            isSupportedReadRule(getTocRule().chapterName) &&
+            isSupportedReadRule(getTocRule().chapterUrl) &&
+            isSupportedReadRule(getTocRule().nextTocUrl) &&
+            isSupportedReadRule(getContentRule().content)
+
+    fun supportsExplore(): Boolean =
+        !exploreUrl.isNullOrBlank() && !getExploreRule().bookList.isNullOrBlank()
+
+    fun getExploreRule(): ExploreRule = ruleExplore ?: ExploreRule()
+
     fun getSearchRule(): SearchRule = ruleSearch ?: SearchRule()
 
     fun getBookInfoRule(): BookInfoRule = ruleBookInfo ?: BookInfoRule()
@@ -68,6 +103,12 @@ data class BookSource(
             }
         }
         return headers
+    }
+
+    private fun isSupportedReadRule(rule: String?): Boolean {
+        val text = rule?.lowercase().orEmpty()
+        if (text.isBlank()) return true
+        return !unsupportedReadTokens.any { text.contains(it) }
     }
 
     class Converters {
@@ -110,6 +151,14 @@ data class BookSource(
     companion object {
         const val TYPE_TEXT = 0
         const val TYPE_AUDIO = 1
+
+        private val unsupportedReadTokens = listOf(
+            "@js",
+            "<js",
+            "java.ajax",
+            "webview",
+            "textnodes"
+        )
 
         val gson: Gson = GsonBuilder()
             .disableHtmlEscaping()

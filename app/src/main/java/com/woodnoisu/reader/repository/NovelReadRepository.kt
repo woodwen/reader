@@ -79,6 +79,14 @@ class NovelReadRepository @Inject constructor(
                     onNext(chapterBean.id)
                 }
             }
+            if (chapters.isNotEmpty() && newChapters.none { it.content.isNotBlank() }) {
+                LogUtil.e(
+                    "NovelRepository",
+                    "章节正文为空：${chapters.first().bookUrl}，source=${chapters.first().shopName}"
+                )
+                onError("章节正文为空，请换源阅读")
+                return@flow
+            }
             emit(newChapters)
             onSuccess("请求章节内容成功")
         } catch (e: Exception) {

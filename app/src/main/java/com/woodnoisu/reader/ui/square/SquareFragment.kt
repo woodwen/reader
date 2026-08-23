@@ -73,10 +73,14 @@ class SquareFragment: BaseFragment() {
                     val option = options[index]
                     viewModel.fetchShopOption(option)
                     if (option.dynamic) {
-                        squareAdapter.clear()
                         binding.searchTitle.tvSearchTitle.text = viewModel.getShopTitle()
-                        binding.searchTitle.tvSearchFilter.text = "仅搜索"
-                        showSquareMessage("动态书源请先输入书名或作者搜索")
+                        if (option.canExplore) {
+                            searchData(typeName = viewModel.getTypes()[0])
+                        } else {
+                            squareAdapter.clear()
+                            binding.searchTitle.tvSearchFilter.text = "仅搜索"
+                            showSquareMessage("动态书源请先输入书名或作者搜索")
+                        }
                     } else {
                         val typeName = viewModel.getTypes()[0]
                         searchData(typeName = typeName)
@@ -89,7 +93,11 @@ class SquareFragment: BaseFragment() {
         // 小说分类弹出框事件
         binding.searchTitle.tvSearchFilter.setOnClickListener {
             if (viewModel.isDynamicSource()) {
-                viewModel.toastMsg("动态书源仅支持搜索")
+                if (viewModel.canExplore()) {
+                    searchData(typeName = viewModel.getTypes()[0])
+                } else {
+                    viewModel.toastMsg("动态书源仅支持搜索")
+                }
                 return@setOnClickListener
             }
             MaterialDialog(requireContext()).show {
@@ -166,8 +174,8 @@ class SquareFragment: BaseFragment() {
 
         viewModel.sourceOptions.observe(viewLifecycleOwner, {
             viewModel.updateSourceOptions(it)
-            viewModel.selectDefaultSourceIfNeeded(it)
-            if (it.isNotEmpty() && squareAdapter.itemCount == 0 && !viewModel.isDynamicSource()) {
+            val selectedChanged = viewModel.selectDefaultSourceIfNeeded(it)
+            if (it.isNotEmpty() && (selectedChanged || squareAdapter.itemCount == 0) && !viewModel.isDynamicSource()) {
                 val typeName = viewModel.getTypes()[0]
                 searchData(typeName = typeName)
             }
@@ -226,7 +234,10 @@ class SquareFragment: BaseFragment() {
     /**
      * 初始化数据
      */
-    override fun initData() {
+    override fun initData() {}
+
+    override fun onResume() {
+        super.onResume()
         viewModel.fetchSourceOptions()
     }
 

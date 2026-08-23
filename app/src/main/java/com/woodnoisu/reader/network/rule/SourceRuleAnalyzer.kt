@@ -75,7 +75,7 @@ class SourceRuleAnalyzer(
 
     private fun cssElementsSingle(input: Any, rule: String): List<Element> {
         var elements = inputElements(input)
-        val segments = rule.removePrefix("@CSS:").split("@").filter { it.isNotBlank() }
+        val segments = normalizeCssRule(rule).split("@").filter { it.isNotBlank() }
         if (segments.isEmpty()) return elements
         for ((index, segment) in segments.withIndex()) {
             if (index == segments.lastIndex && segments.size > 1 && isValueSegment(segment)) break
@@ -98,7 +98,7 @@ class SourceRuleAnalyzer(
     }
 
     private fun cssStringsSingle(input: Any, rule: String): List<String> {
-        val normalized = rule.removePrefix("@CSS:")
+        val normalized = normalizeCssRule(rule)
         val segments = normalized.split("@").filter { it.isNotBlank() }
         val valueSegment = segments.lastOrNull()?.takeIf {
             if (segments.size > 1) isValueSegment(it) else isDirectValueSegment(it)
@@ -160,6 +160,17 @@ class SourceRuleAnalyzer(
             valueSegment == "src" -> element.attr("src")
             else -> element.attr(valueSegment)
         }
+    }
+
+    private fun normalizeCssRule(rule: String): String {
+        var normalized = rule.trim()
+        if (normalized.startsWith("@CSS:", true)) {
+            normalized = normalized.substring(5)
+        }
+        if (normalized.startsWith("css:", true)) {
+            normalized = normalized.substring(4)
+        }
+        return normalized
     }
 
     private fun isValueSegment(segment: String): Boolean {
@@ -261,6 +272,10 @@ class SourceRuleAnalyzer(
                     Mode.REGEX
                 }
                 text.startsWith("@CSS:", true) -> Mode.DEFAULT
+                text.startsWith("css:", true) -> {
+                    text = text.substring(4)
+                    Mode.DEFAULT
+                }
                 else -> Mode.DEFAULT
             }
             val parts = text.split("##")

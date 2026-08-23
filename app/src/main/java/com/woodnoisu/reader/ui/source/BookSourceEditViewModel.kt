@@ -43,6 +43,9 @@ class BookSourceEditViewModel @Inject constructor(
                 }
                 repository.saveSource(sources[0], oldKey)
             }.onSuccess {
+                if (!it) {
+                    _toast.postValue("书源不可用，已保存为禁用")
+                }
                 _saved.postValue(true)
             }.onFailure {
                 _toast.postValue(it.localizedMessage ?: "保存失败")
