@@ -18,6 +18,10 @@
 - 动态书源搜索结果保留内部 source key 用于详情、目录和正文加载，同时向用户展示可读书源名。
 - README 中的 APK 链接改为保守的现有下载链接表述，不再声明未验证的最新性。
 
+### Build
+
+- 升级当前应用配置版本为 `versionName 1.0.3`、`versionCode 3`。
+
 ### Fixed
 
 - 修复新版 Android Studio/legacy Gradle 基线下的构建与真机启动兼容问题。

@@ -1,6 +1,6 @@
 # Reader
 
-Reader 是一个单模块 Android/Kotlin 免费小说阅读器，主模块为 `:app`，Gradle 入口为 `./gradlew`。应用包名为 `com.woodnoisu.reader`，当前仓库配置的版本为 `1.0.2`。
+Reader 是一个单模块 Android/Kotlin 免费小说阅读器，主模块为 `:app`，Gradle 入口为 `./gradlew`。应用包名为 `com.woodnoisu.reader`，当前仓库配置的版本为 `1.0.3`。
 
 项目保留单模块结构，主要围绕书城、书架、本地阅读、在线阅读和书源管理展开。仓库内的 OpenSpec artifacts 用于规划较大的用户可见行为、架构约束和协作规则变更。
 
