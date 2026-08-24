@@ -48,6 +48,15 @@
             android:text="导入"
             android:textColor="@color/white"
             android:textSize="14sp" />
+
+        <TextView
+            android:id="@+id/tv_check_all"
+            android:layout_width="48dp"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:text="检测"
+            android:textColor="@color/white"
+            android:textSize="14sp" />
     </LinearLayout>
 
     <EditText
@@ -63,6 +72,42 @@
         android:textColor="@color/black_text"
         android:textColorHint="@color/text_hint"
         android:textSize="14sp" />
+
+    <LinearLayout
+        android:id="@+id/ll_check_progress"
+        android:layout_width="match_parent"
+        android:layout_height="44dp"
+        android:layout_marginLeft="8dp"
+        android:layout_marginRight="8dp"
+        android:layout_marginBottom="8dp"
+        android:background="@color/white"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingLeft="12dp"
+        android:paddingRight="4dp"
+        android:visibility="gone"
+        tools:visibility="visible">
+
+        <TextView
+            android:id="@+id/tv_check_progress"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:textColor="@color/black_text"
+            android:textSize="14sp"
+            tools:text="检测 1/10：测试源" />
+
+        <TextView
+            android:id="@+id/tv_cancel_check"
+            android:layout_width="56dp"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:text="取消"
+            android:textColor="@color/text_fail"
+            android:textSize="13sp" />
+    </LinearLayout>
 
     <FrameLayout
         android:layout_width="match_parent"

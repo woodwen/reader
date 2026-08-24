@@ -7,6 +7,7 @@ import android.os.Build
 import android.os.SystemClock
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Switch
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import androidx.test.espresso.Espresso.onView
@@ -15,6 +16,7 @@ import androidx.test.espresso.ViewAction
 import androidx.test.espresso.action.ViewActions.closeSoftKeyboard
 import androidx.test.espresso.action.ViewActions.replaceText
 import androidx.test.espresso.assertion.ViewAssertions.matches
+import androidx.test.espresso.matcher.RootMatchers.isDialog
 import androidx.test.espresso.matcher.ViewMatchers.isDisplayed
 import androidx.test.espresso.matcher.ViewMatchers.isAssignableFrom
 import androidx.test.espresso.matcher.ViewMatchers.withId
@@ -146,6 +148,71 @@ class BookSourceDeviceTest {
             waitForText("书源管理")
             waitForText("音量键翻页")
             assertViewAbove(R.id.tv_book_source, R.id.switch_volume)
+        } finally {
+            server.shutdown()
+        }
+    }
+
+    @Test
+    fun sourceAvailabilityCheckDisablesFailedSource() {
+        val instrumentation = InstrumentationRegistry.getInstrumentation()
+        val context = instrumentation.targetContext
+        val server = MockWebServer()
+        server.start()
+        try {
+            enqueueSearchPage(server)
+            enqueueSearchPage(server)
+            server.enqueue(
+                MockResponse().setBody(
+                    """
+                    <html><body>
+                      <h1>真机自动书</h1>
+                      <span class="author">作者：测试作者</span>
+                      <a class="toc" href="/toc/auto">目录</a>
+                    </body></html>
+                    """.trimIndent()
+                )
+            )
+            server.enqueue(
+                MockResponse().setBody(
+                    """
+                    <html><body>
+                      <a class="chapter" href="/chapter/1">第一章</a>
+                    </body></html>
+                    """.trimIndent()
+                )
+            )
+            server.enqueue(
+                MockResponse().setBody(
+                    """
+                    <html><body>
+                      <div class="content"></div>
+                    </body></html>
+                    """.trimIndent()
+                )
+            )
+            val baseUrl = server.url("/").toString()
+            val sourceName = "检测失败源${SystemClock.elapsedRealtime()}"
+            importBookSource(context.packageName, sourceJson(sourceName, baseUrl))
+            onView(withId(R.id.et_search)).perform(replaceText(sourceName), closeSoftKeyboard())
+            waitForText(startsWith("$sourceName (真机)"))
+
+            onView(withId(R.id.rv_sources)).perform(
+                clickRecyclerItemChildContaining(sourceName, R.id.tv_check)
+            )
+            waitForDialogText("检测书源")
+            onView(withText("开始检测")).inRoot(isDialog()).perform(performViewClick())
+
+            waitForText(startsWith("检测失败：正文：正文内容为空"), 15000)
+            onView(withId(R.id.rv_sources)).check { view, noViewFoundException ->
+                noViewFoundException?.let { throw it }
+                val recyclerView = view as RecyclerView
+                val itemView = findVisibleItemContaining(recyclerView, sourceName)
+                    ?: throw AssertionError("Book source item not found: $sourceName")
+                val enabledSwitch = itemView.findViewById<Switch>(R.id.switch_enabled)
+                    ?: throw AssertionError("Enabled switch not found")
+                assertTrue("Expected failed source to be disabled", !enabledSwitch.isChecked)
+            }
         } finally {
             server.shutdown()
         }
@@ -339,6 +406,30 @@ class BookSourceDeviceTest {
         }
     }
 
+    private fun clickRecyclerItemChildContaining(text: String, childId: Int): ViewAction = object : ViewAction {
+        override fun getConstraints(): Matcher<View> = isAssignableFrom(RecyclerView::class.java)
+
+        override fun getDescription(): String = "click child in RecyclerView item containing: $text"
+
+        override fun perform(uiController: UiController, view: View) {
+            val recyclerView = view as RecyclerView
+            val adapter = recyclerView.adapter ?: throw AssertionError("RecyclerView has no adapter")
+            for (position in 0 until adapter.itemCount) {
+                recyclerView.scrollToPosition(position)
+                uiController.loopMainThreadForAtLeast(100)
+                val itemView = recyclerView.findViewHolderForAdapterPosition(position)?.itemView
+                if (itemView != null && containsTextPart(itemView, text)) {
+                    val child = itemView.findViewById<View>(childId)
+                        ?: throw AssertionError("Child view not found: $childId")
+                    child.performClick()
+                    uiController.loopMainThreadUntilIdle()
+                    return
+                }
+            }
+            throw AssertionError("Text containing value not found in RecyclerView: $text")
+        }
+    }
+
     private fun runOnCurrentActivity(block: (Activity) -> Unit) {
         val instrumentation = InstrumentationRegistry.getInstrumentation()
         instrumentation.runOnMainSync {
@@ -418,6 +509,12 @@ class BookSourceDeviceTest {
     private fun waitForText(text: String, timeout: Long = 8000) {
         waitUntil(timeout) {
             onView(withText(text)).check(matches(isDisplayed()))
+        }
+    }
+
+    private fun waitForDialogText(text: String, timeout: Long = 8000) {
+        waitUntil(timeout) {
+            onView(withText(text)).inRoot(isDialog()).check(matches(isDisplayed()))
         }
     }
 
@@ -527,6 +624,16 @@ class BookSourceDeviceTest {
             }
         }
         return false
+    }
+
+    private fun findVisibleItemContaining(recyclerView: RecyclerView, text: String): View? {
+        for (index in 0 until recyclerView.childCount) {
+            val itemView = recyclerView.getChildAt(index)
+            if (containsTextPart(itemView, text)) {
+                return itemView
+            }
+        }
+        return null
     }
 
     private fun waitUntil(timeout: Long, assertion: () -> Unit) {

@@ -6,7 +6,7 @@
     android:layout_marginTop="1dp"
     android:background="@color/white"
     android:gravity="center_vertical"
-    android:minHeight="72dp"
+    android:minHeight="88dp"
     android:orientation="horizontal"
     android:padding="12dp">
 
@@ -36,28 +36,64 @@
             android:textColor="@color/text_grey"
             android:textSize="12sp"
             tools:text="https://example.com" />
+
+        <TextView
+            android:id="@+id/tv_status"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:ellipsize="end"
+            android:maxLines="2"
+            android:textColor="@color/text_fail"
+            android:textSize="12sp"
+            android:visibility="gone"
+            tools:text="检测失败：正文内容为空"
+            tools:visibility="visible" />
     </LinearLayout>
 
-    <Switch
-        android:id="@+id/switch_enabled"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content" />
-
-    <TextView
-        android:id="@+id/tv_edit"
-        android:layout_width="44dp"
-        android:layout_height="44dp"
+    <LinearLayout
+        android:layout_width="144dp"
+        android:layout_height="wrap_content"
         android:gravity="center"
-        android:text="编辑"
-        android:textColor="@color/main_color"
-        android:textSize="13sp" />
+        android:orientation="vertical">
 
-    <TextView
-        android:id="@+id/tv_delete"
-        android:layout_width="44dp"
-        android:layout_height="44dp"
-        android:gravity="center"
-        android:text="删除"
-        android:textColor="@color/text_fail"
-        android:textSize="13sp" />
+        <Switch
+            android:id="@+id/switch_enabled"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="36dp"
+            android:gravity="center"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/tv_check"
+                android:layout_width="44dp"
+                android:layout_height="match_parent"
+                android:gravity="center"
+                android:text="检测"
+                android:textColor="@color/main_color"
+                android:textSize="13sp" />
+
+            <TextView
+                android:id="@+id/tv_edit"
+                android:layout_width="44dp"
+                android:layout_height="match_parent"
+                android:gravity="center"
+                android:text="编辑"
+                android:textColor="@color/main_color"
+                android:textSize="13sp" />
+
+            <TextView
+                android:id="@+id/tv_delete"
+                android:layout_width="44dp"
+                android:layout_height="match_parent"
+                android:gravity="center"
+                android:text="删除"
+                android:textColor="@color/text_fail"
+                android:textSize="13sp" />
+        </LinearLayout>
+    </LinearLayout>
 </LinearLayout>

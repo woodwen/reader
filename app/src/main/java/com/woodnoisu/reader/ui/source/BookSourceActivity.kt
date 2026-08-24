@@ -20,6 +20,7 @@ import com.woodnoisu.reader.R
 import com.woodnoisu.reader.base.BaseActivity
 import com.woodnoisu.reader.databinding.ActivityBookSourceBinding
 import com.woodnoisu.reader.model.source.BookSource
+import com.woodnoisu.reader.repository.source.BookSourceRepository
 import com.woodnoisu.reader.ui.qrcode.QrCodeResult
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -52,6 +53,12 @@ class BookSourceActivity : BaseActivity(), BookSourceAdapter.Callback {
         binding.tvBack.setOnClickListener { finish() }
         binding.tvAdd.setOnClickListener { BookSourceEditActivity.start(this, null) }
         binding.tvImport.setOnClickListener { showImportMenu() }
+        binding.tvCheckAll.setOnClickListener {
+            showCheckKeywordDialog { keyword ->
+                viewModel.checkSources(adapter.getItemsSnapshot(), keyword)
+            }
+        }
+        binding.tvCancelCheck.setOnClickListener { viewModel.cancelCheck() }
         binding.etSearch.addTextChangedListener(object : TextWatcher {
             override fun afterTextChanged(s: Editable?) {
                 viewModel.search(s?.toString().orEmpty())
@@ -64,6 +71,14 @@ class BookSourceActivity : BaseActivity(), BookSourceAdapter.Callback {
         viewModel.sources.observe(this) {
             adapter.submitList(it)
             binding.tvEmpty.visibility = if (it.isEmpty()) View.VISIBLE else View.GONE
+        }
+        viewModel.checkState.observe(this) {
+            adapter.setCheckingSource(it.currentSourceUrl)
+            binding.llCheckProgress.visibility = if (it.running) View.VISIBLE else View.GONE
+            binding.tvCheckProgress.text = it.progressText()
+            if (!it.running && it.summary.isNotBlank()) {
+                Toast.makeText(this, it.summary, Toast.LENGTH_SHORT).show()
+            }
         }
         viewModel.toast.observe(this) {
             if (!it.isNullOrBlank()) Toast.makeText(this, it, Toast.LENGTH_SHORT).show()
@@ -103,6 +118,12 @@ class BookSourceActivity : BaseActivity(), BookSourceAdapter.Callback {
         viewModel.updateEnabled(source, enabled)
     }
 
+    override fun check(source: BookSource) {
+        showCheckKeywordDialog { keyword ->
+            viewModel.checkSource(source, keyword)
+        }
+    }
+
     private fun showImportMenu() {
         val popupMenu = PopupMenu(this, binding.tvImport)
         popupMenu.menu.add("粘贴导入")
@@ -133,6 +154,24 @@ class BookSourceActivity : BaseActivity(), BookSourceAdapter.Callback {
             .setNegativeButton("取消", null)
             .setPositiveButton("导入") { _, _ ->
                 importSource(editText.text?.toString())
+            }
+            .show()
+    }
+
+    private fun showCheckKeywordDialog(onConfirm: (String) -> Unit) {
+        val editText = EditText(this).apply {
+            hint = "输入检测关键词"
+            setSingleLine(true)
+            setText(BookSourceRepository.DEFAULT_CHECK_KEYWORD)
+            setSelection(text.length)
+            setPadding(32, 16, 32, 16)
+        }
+        AlertDialog.Builder(this)
+            .setTitle("检测书源")
+            .setView(editText)
+            .setNegativeButton("取消", null)
+            .setPositiveButton("开始检测") { _, _ ->
+                onConfirm(editText.text?.toString().orEmpty())
             }
             .show()
     }
