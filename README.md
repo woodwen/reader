@@ -2,12 +2,12 @@
 
 Reader 是一个单模块 Android/Kotlin 免费小说阅读器，主模块为 `:app`，Gradle 入口为 `./gradlew`。应用包名为 `com.woodnoisu.reader`，当前仓库配置的版本为 `1.0.3`。
 
-项目保留单模块结构，主要围绕书城、书架、本地阅读、在线阅读和书源管理展开。仓库内的 OpenSpec artifacts 用于规划较大的用户可见行为、架构约束和协作规则变更。
+项目保留单模块结构，主要围绕书城、书架、本地阅读、在线阅读和书源管理展开。
 
 ## 当前功能
 
-- 书城：保留固定书源入口，当前代码包含“全文阅读”和“笔趣阁”解析实现，支持分类、搜索、简介、订阅和在线阅读。
-- 书源管理：支持书源列表、启停、编辑、删除、二维码导入和 `yuedu://booksource/importonline` 在线导入路径；动态书源接入搜索和阅读链路。
+- 书城：支持分类、搜索、简介、订阅和在线阅读。
+- 书源管理（支持阅读书源）：支持书源列表、启停、编辑、删除、二维码导入和 `yuedu://booksource/importonline` 在线导入路径；动态书源接入搜索和阅读链路。
 - 书架：支持本地书架展示、取消订阅、书架内过滤搜索、本地 `.txt` 书籍订阅和本地阅读。
 - 书架远程搜索：支持“搜书源”聚合已启用书源，并在远程结果中展示来源、分类、连载状态、最新章节、简介和书源提供的字数字段。
 - 阅读器：支持目录、亮度、日夜模式、缓存、字体、字号、翻页模式、背景和书签相关交互。
@@ -68,24 +68,39 @@ Reader 是一个单模块 Android/Kotlin 免费小说阅读器，主模块为 `:
 ./gradlew :app:lintDebug
 ```
 
-OpenSpec 和文档类变更常用检查：
+真机连接并授权 USB 调试后，可以用 `adb exec-out screencap` 直接保存当前屏幕到本地，适合在安装、冷启动或手动切到目标页面后留存画面：
 
 ```bash
-openspec validate <change-id> --strict
-openspec validate --all --strict
-git diff --check
+# 1. 确认可见设备，并自动选择第一个 device 状态的真机
+adb devices
+DEVICE_ID=$(adb devices | awk 'NR > 1 && $2 == "device" { print $1; exit }')
+test -n "$DEVICE_ID" || { echo "未发现已授权真机"; exit 1; }
+
+# 如果同时连接了多台设备，改为手动指定：
+# DEVICE_ID=xxxxxx
+
+# 2. 构建并安装 debug APK
+./gradlew :app:assembleDebug
+adb -s "$DEVICE_ID" install -r app/build/outputs/apk/debug/app-debug.apk
+
+# 3. 冷启动应用并保存当前屏幕截图
+adb -s "$DEVICE_ID" shell am force-stop com.woodnoisu.reader
+adb -s "$DEVICE_ID" shell am start -W -n com.woodnoisu.reader/.ui.StartActivity
+mkdir -p screenshot/device
+adb -s "$DEVICE_ID" exec-out screencap -p > "screenshot/device/reader-$(date +%Y%m%d-%H%M%S).png"
+```
+
+如果需要连续留存页面状态，可以在启动或手动操作到目标页面后循环截图：
+
+```bash
+mkdir -p screenshot/device
+for i in 1 2 3 4 5; do
+  adb -s "$DEVICE_ID" exec-out screencap -p > "screenshot/device/reader-$(date +%Y%m%d-%H%M%S)-$i.png"
+  sleep 2
+done
 ```
 
 设备验证需要单独说明执行范围。安装成功、冷启动成功和日志无崩溃不等于已经验证完整交互流程；涉及 UI、资源、Manifest、DI、Room schema 或启动路径时，应按风险补充真实设备检查。
-
-## OpenSpec 工作流
-
-较大的用户可见行为、架构约束或协作规则变更默认通过 `openspec/changes/<change-id>/` 规划。常见流程：
-
-- 先出方案：创建或更新 `proposal.md`、`design.md`、`tasks.md` 和 `specs/**/spec.md`，不改实现代码。
-- 实施方案：按 `tasks.md` 顺序实施，保持任务勾选和实际验证一致。
-- review：同时检查 OpenSpec artifacts、当前 diff、架构边界、测试和文档。
-- 完成提交/归档：只在明确要求时执行，不默认提交、不 push、不 archive。
 
 ## APK 下载
 
